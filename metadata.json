@@ -1,0 +1,6 @@
+{
+  "name": "Mortal Mario Kombat",
+  "description": "لعبة مورتال ماريو كومبات الكلاسيكية - تحكم بمقاتلي مورتال كومبات (سوب زيرو، سكوربيان، نوب، رايدن، ريبتايل) في عوالم ماريو ومواجهة باوزر ونينجا الخصم مع شرح تفاعلي ومخططات وأسئلة",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

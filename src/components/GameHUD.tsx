@@ -1,0 +1,165 @@
+import React from 'react';
+import { Player, Enemy } from '../types';
+import { FIGHTERS } from '../game/characters';
+
+interface GameHUDProps {
+  player: Player;
+  currentWorld: number;
+  currentLevel: number;
+  timeRemaining: number;
+  bossEnemy: Enemy | null;
+  onOpenGuide: () => void;
+  onOpenSelectFighter: () => void;
+  onToggleSound: () => void;
+  isMuted: boolean;
+  onTogglePause: () => void;
+  isPaused: boolean;
+}
+
+export const GameHUD: React.FC<GameHUDProps> = ({
+  player,
+  currentWorld,
+  currentLevel,
+  timeRemaining,
+  bossEnemy,
+  onOpenGuide,
+  onOpenSelectFighter,
+  onToggleSound,
+  isMuted,
+  onTogglePause,
+  isPaused,
+}) => {
+  const fighter = FIGHTERS[player.character];
+
+  return (
+    <div
+      id="game-hud"
+      className="absolute top-0 inset-x-0 z-30 pointer-events-none p-2 sm:p-3 flex flex-col gap-2 font-mono"
+    >
+      {/* Top Header Row */}
+      <div className="flex items-center justify-between text-xs sm:text-sm text-white font-black drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+        {/* Left: Player Info & Health */}
+        <div className="flex items-center gap-2 pointer-events-auto bg-black/60 px-2.5 py-1 rounded-xl border border-neutral-700/60 backdrop-blur-sm">
+          <span className="text-base sm:text-lg">{fighter.avatar}</span>
+          <div className="flex flex-col">
+            <span className="text-[10px] text-neutral-400 leading-none">{fighter.name}</span>
+            <div className="flex items-center gap-1 mt-0.5">
+              {/* Health Hearts */}
+              <div className="flex gap-0.5">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={`text-xs ${i < player.health ? 'text-red-500' : 'text-neutral-600'}`}
+                  >
+                    ❤️
+                  </span>
+                ))}
+              </div>
+              <span className="text-[10px] text-neutral-300 ml-1">x{player.lives}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Center: Coins, Score & World */}
+        <div className="flex items-center gap-3 sm:gap-6 bg-black/60 px-3 py-1 rounded-xl border border-neutral-700/60 backdrop-blur-sm">
+          <div className="flex items-center gap-1">
+            <span className="text-amber-400">🪙</span>
+            <span className="text-amber-300">{player.coins.toString().padStart(2, '0')}</span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <span className="text-neutral-400 text-[10px] hidden sm:inline">WORLD</span>
+            <span className="text-emerald-400 font-black">{currentWorld}-{currentLevel}</span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <span className="text-neutral-400 text-[10px] hidden sm:inline">TIME</span>
+            <span className={`${timeRemaining < 30 ? 'text-red-400 animate-pulse' : 'text-neutral-200'}`}>
+              {timeRemaining}
+            </span>
+          </div>
+
+          <div className="hidden md:flex items-center gap-1">
+            <span className="text-neutral-400 text-[10px]">SCORE</span>
+            <span className="text-white">{player.score.toString().padStart(6, '0')}</span>
+          </div>
+        </div>
+
+        {/* Right: Controls & Guide Quick Actions */}
+        <div className="flex items-center gap-1.5 pointer-events-auto">
+          {/* Guide & Diagrams button */}
+          <button
+            id="btn-open-guide-hud"
+            onClick={onOpenGuide}
+            title="دليل اللعبة والمخططات التفاعلية"
+            className="px-2.5 py-1 rounded-lg bg-indigo-900/80 hover:bg-indigo-800 active:scale-95 border border-indigo-500/80 text-indigo-100 text-xs font-bold flex items-center gap-1 transition-all backdrop-blur-sm shadow-md"
+          >
+            <span>📊</span>
+            <span className="hidden sm:inline">المخططات والشرح</span>
+          </button>
+
+          {/* Change Fighter button */}
+          <button
+            id="btn-change-fighter-hud"
+            onClick={onOpenSelectFighter}
+            title="تغيير المقاتل"
+            className="px-2 py-1 rounded-lg bg-neutral-900/80 hover:bg-neutral-800 active:scale-95 border border-neutral-700 text-neutral-200 text-xs font-bold transition-all backdrop-blur-sm"
+          >
+            🥋
+          </button>
+
+          {/* Mute button */}
+          <button
+            id="btn-toggle-sound-hud"
+            onClick={onToggleSound}
+            title="كتم/تشغيل الصوت"
+            className="p-1.5 rounded-lg bg-neutral-900/80 hover:bg-neutral-800 active:scale-95 border border-neutral-700 text-neutral-200 text-xs font-bold transition-all backdrop-blur-sm"
+          >
+            {isMuted ? '🔇' : '🔊'}
+          </button>
+
+          {/* Pause button */}
+          <button
+            id="btn-pause-game-hud"
+            onClick={onTogglePause}
+            className="p-1.5 rounded-lg bg-neutral-900/80 hover:bg-neutral-800 active:scale-95 border border-neutral-700 text-neutral-200 text-xs font-bold transition-all backdrop-blur-sm"
+          >
+            {isPaused ? '▶️' : '⏸️'}
+          </button>
+        </div>
+      </div>
+
+      {/* BOSS HEALTH BAR (Appears prominently when Bowser or Rival Ninja is in battle) */}
+      {bossEnemy && bossEnemy.isAlive && (
+        <div className={`w-full max-w-md mx-auto bg-neutral-950/90 border-2 ${
+          bossEnemy.type === 'rival_ninja' ? 'border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.5)]' : 'border-red-600 shadow-[0_0_20px_rgba(220,38,38,0.5)]'
+        } rounded-xl p-2 flex flex-col gap-1 pointer-events-auto backdrop-blur-sm`}>
+          <div className="flex items-center justify-between text-xs font-black">
+            <span className={`${bossEnemy.type === 'rival_ninja' ? 'text-amber-400' : 'text-red-500'} flex items-center gap-1`}>
+              <span>{bossEnemy.type === 'rival_ninja' ? '⚔️' : '👑'}</span>
+              <span>
+                {bossEnemy.type === 'rival_ninja'
+                  ? `RIVAL BOSS: ${(bossEnemy.rivalFighter || 'ninja').toUpperCase()} • الزعيم المنافس`
+                  : 'BOWSER • باوزر زعيم القلعة'}
+              </span>
+            </span>
+            <span className="text-amber-400 font-mono">
+              {bossEnemy.health} / {bossEnemy.maxHealth} HP
+            </span>
+          </div>
+          {/* Health Gauge */}
+          <div className="w-full h-3 bg-neutral-900 rounded-full overflow-hidden border border-neutral-700">
+            <div
+              className={`h-full ${
+                bossEnemy.type === 'rival_ninja'
+                  ? 'bg-gradient-to-r from-amber-600 via-yellow-500 to-emerald-400'
+                  : 'bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400'
+              } transition-all duration-200`}
+              style={{ width: `${Math.max(0, (bossEnemy.health / bossEnemy.maxHealth) * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
