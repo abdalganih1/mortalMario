@@ -136,4 +136,130 @@ export const FIGHTERS: Record<FighterId, FighterConfig> = {
     special2Desc: 'يتحول لظل شيطاني يندفع للأمام ويسحق كل الأعداء مع مناعة كاملة أثناء التحول!',
     quote: 'Your soul is mine!',
   },
+  kunglao: {
+    id: 'kunglao',
+    name: 'Kung Lao',
+    nameAr: 'كونغ لاو',
+    title: 'راهب الشاولين وقبعة الموت',
+    primaryColor: '#eab308',
+    accentColor: '#713f12',
+    description: 'راهب الشاولين صاحب القبعة الشفرة الأسطورية. يرمي قبعته فتقطع الأعداء وتعود، ويدور كالإعصار بقبعته الدوارة!',
+    avatar: '🎩',
+    special1Name: 'رمي القبعة (Hat Throw)',
+    special1Desc: 'يرمي قبعته المشحوذة كالشفرة الدوارة تخترق صفوف الأعداء وتعود إليه!',
+    special2Name: 'إعصار القبعة (Hat Cyclone)',
+    special2Desc: 'يدور بسرعة الإعصار وقبعته ممدودة فيمزق كل وحش يلمسه مع حماية كاملة!',
+    quote: 'My hat will slice you!',
+  },
+  johnnycage: {
+    id: 'johnnycage',
+    name: 'Johnny Cage',
+    nameAr: 'جوني كيج',
+    title: 'نجم هوليوود ولكمة الظل',
+    primaryColor: '#4ade80',
+    accentColor: '#14532d',
+    description: 'نجم أفلام الأكشن الذي يثبت أن حركاته حقيقية! يقذف كرات الطاقة الخضراء ويسحق الخصوم بلكمة الظل الصاعدة الشهيرة!',
+    avatar: '🕶️',
+    special1Name: 'الكرة الخضراء (Forceball Bolt)',
+    special1Desc: 'يطلق كرة طاقة خضراء متفجرة من قبضته تصعق الأعداء عن بعد!',
+    special2Name: 'لكمة الظل (Shadow Uppercut)',
+    special2Desc: 'الضربة الأشهر! لكمة صاعدة خاطفة ترفع كل الأعداء القريبين عالياً مع صرخة النصر!',
+    quote: "Here's Johnny!",
+  },
+  jax: {
+    id: 'jax',
+    name: 'Jax Briggs',
+    nameAr: 'جاكس',
+    title: 'الرائد جاكس والأذرع الفولاذية',
+    primaryColor: '#94a3b8',
+    accentColor: '#334155',
+    description: 'الرائد في القوات الخاصة بذراعيه المعدنيتين المدمرتين. يطلق موجات الصدمة الأرضية ويسحق الأعداء بمسكة الغوتشا المتتالية!',
+    avatar: '🦾',
+    special1Name: 'موجة الصدمة (Shockwave)',
+    special1Desc: 'يلكم الأرض فتنطلق موجة صدمة مدمرة تزحف وتسحق كل من في طريقها!',
+    special2Name: 'مسكة الغوتشا (Gotcha Grab)',
+    special2Desc: 'يندفع ويمسك العدو بسلسلة لكمات متتالية مدمرة من الأذرع الفولاذية!',
+    quote: 'Gotcha!',
+  },
+  sonya: {
+    id: 'sonya',
+    name: 'Sonya Blade',
+    nameAr: 'سونيا بليد',
+    title: 'الملازم سونيا وحلقات الطاقة',
+    primaryColor: '#f472b6',
+    accentColor: '#831843',
+    description: 'ملازم القوات الخاصة وأسرع مقاتلة في البطولة. ترمي حلقات الطاقة الوردية وتنقض على الأعداء بركلة المقص الطائرة!',
+    avatar: '💖',
+    special1Name: 'حلقة الطاقة (Energy Ring)',
+    special1Desc: 'ترمي حلقة طاقة وردية دوارة تخترق الأعداء وتكهرب كل من تلمسه!',
+    special2Name: 'ركلة المقص (Scissor Kick)',
+    special2Desc: 'تنقض طائرة بركلة مقصية مزدوجة تصيب كل الأعداء في طريقها مرتين!',
+    quote: 'Kiss of death!',
+  },
 };
+
+// --- PROGRESSION: fighters unlock by clearing stages (stage index required) ---
+export const FIGHTER_UNLOCK: Record<FighterId, number> = {
+  subzero: 0,
+  scorpion: 0,
+  noob: 1,
+  raiden: 2,
+  reptile: 3,
+  kunglao: 4,
+  baraka: 6,
+  liukang: 8,
+  kitana: 10,
+  johnnycage: 14,
+  sonya: 18,
+  jax: 24,
+  shangtsung: 32,
+};
+
+// --- PROGRESSION: moves unlock by stage index (stage 1 = first level) ---
+export const MOVE_UNLOCK = {
+  dash: 1, // horizontal dash (double-tap left/right)
+  special1: 2, // ranged special button
+  upshift: 3, // upward super shift (double-tap jump)
+  special2: 4, // close special (double-tap punch)
+};
+
+export const MOVE_NAMES: Record<keyof typeof MOVE_UNLOCK, string> = {
+  dash: 'الشفت الخاطف ⚡',
+  special1: 'الضربة البعيدة 🎯',
+  upshift: 'الشيفت العلوي 🚀',
+  special2: 'الحركة القريبة 🌀',
+};
+
+const MAX_STAGE_KEY = 'mmk_maxStage';
+
+export function getMaxStageCleared(): number {
+  try {
+    const v = parseInt(localStorage.getItem(MAX_STAGE_KEY) || '-1', 10);
+    return isNaN(v) ? -1 : v;
+  } catch {
+    return -1;
+  }
+}
+
+export function saveStageCleared(idx: number): FighterId[] {
+  // Returns ids of fighters newly unlocked by this clear (catches up skipped stages too)
+  const old = getMaxStageCleared();
+  if (idx > old) {
+    try {
+      localStorage.setItem(MAX_STAGE_KEY, String(idx));
+    } catch {
+      /* ignore */
+    }
+  }
+  const cur = Math.max(old, idx);
+  const all = Object.entries(FIGHTER_UNLOCK) as [FighterId, number][];
+  return all.filter(([, req]) => req > old && req <= cur + 1).map(([id]) => id);
+}
+
+export function isFighterUnlocked(id: FighterId): boolean {
+  return (FIGHTER_UNLOCK[id] ?? 0) <= getMaxStageCleared() + 1;
+}
+
+export function isMoveUnlocked(move: keyof typeof MOVE_UNLOCK, stageIdx: number): boolean {
+  return stageIdx >= MOVE_UNLOCK[move];
+}

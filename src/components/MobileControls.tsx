@@ -41,6 +41,8 @@ export interface MobileControlsProps {
   upShiftCooldown?: number;
   hasAirShift?: boolean;
   isGrounded?: boolean;
+  rangedLocked?: boolean;
+  upshiftLocked?: boolean;
 }
 
 export const MobileControls: React.FC<MobileControlsProps> = ({
@@ -54,6 +56,8 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
   upShiftCooldown = 0,
   hasAirShift = true,
   isGrounded = true,
+  rangedLocked = false,
+  upshiftLocked = false,
 }) => {
   // Support both new prop names and backwards compatible prop names
   const cdRanged = cooldownRangedSpecial !== undefined ? cooldownRangedSpecial : cooldownSpecial1;
@@ -184,6 +188,42 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
           rangedTheme:
             'bg-violet-950/90 border-violet-400 text-violet-100 shadow-[0_0_14px_rgba(168,85,247,0.45)]',
         };
+      case 'kunglao':
+        return {
+          rangedName: 'قبعة شفرة 🎩',
+          rangedSub: 'Hat Throw',
+          closeName: 'إعصار قبعة 🌀',
+          closeShort: 'إعصار 🌀',
+          rangedTheme:
+            'bg-yellow-950/90 border-yellow-400 text-yellow-100 shadow-[0_0_14px_rgba(234,179,8,0.45)]',
+        };
+      case 'johnnycage':
+        return {
+          rangedName: 'كرة كيج 🕶️',
+          rangedSub: 'Cage Bolt',
+          closeName: 'لكمة الظل 👊',
+          closeShort: 'ظل 👊',
+          rangedTheme:
+            'bg-green-950/90 border-green-400 text-green-100 shadow-[0_0_14px_rgba(74,222,128,0.45)]',
+        };
+      case 'jax':
+        return {
+          rangedName: 'موجة صدمة 🦾',
+          rangedSub: 'Shockwave',
+          closeName: 'غوتشا 👊👊',
+          closeShort: 'غوتشا 👊',
+          rangedTheme:
+            'bg-slate-950/90 border-slate-400 text-slate-100 shadow-[0_0_14px_rgba(148,163,184,0.45)]',
+        };
+      case 'sonya':
+        return {
+          rangedName: 'حلقة طاقة 💖',
+          rangedSub: 'Energy Ring',
+          closeName: 'ركلة مقص 🦵',
+          closeShort: 'مقص 🦵',
+          rangedTheme:
+            'bg-pink-950/90 border-pink-400 text-pink-100 shadow-[0_0_14px_rgba(244,114,182,0.45)]',
+        };
     }
   };
 
@@ -266,15 +306,15 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
             type="button"
             {...bindControl('rangedSpecial')}
             className={`h-12 sm:h-18 px-2 sm:px-4 landscape:h-11 landscape:opacity-80 rounded-2xl border-2 flex flex-col items-center justify-center text-white shadow-xl active:scale-95 transition-transform backdrop-blur-sm ${
-              fighter.rangedTheme
+              rangedLocked ? 'bg-neutral-900/90 border-neutral-700 text-neutral-400 saturate-0' : fighter.rangedTheme
             } ${cdRanged > 0 ? 'opacity-65' : 'hover:brightness-110'}`}
             aria-label="Ranged Special Move"
           >
             <span className="text-[10px] sm:text-sm font-black whitespace-nowrap leading-tight">
-              {fighter.rangedName}
+              {rangedLocked ? '🔒 مقفولة' : fighter.rangedName}
             </span>
             <span className="text-[7px] sm:text-[9px] font-mono opacity-90 tracking-tighter">
-              {cdRanged > 0 ? `⏳ ${Math.ceil(cdRanged)}s` : '🎯 حركة بعيدة'}
+              {rangedLocked ? 'المرحلة 3' : cdRanged > 0 ? `⏳ ${Math.ceil(cdRanged)}s` : '🎯 حركة بعيدة'}
             </span>
           </button>
 
@@ -309,7 +349,9 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
             </svg>
             <span className="text-[10px] sm:text-xs font-black">قفز</span>
             <span className="text-[7px] sm:text-[8px] font-mono tracking-tighter">
-              {upShiftCooldown > 0
+              {upshiftLocked
+                ? '🔒 المرحلة 4'
+                : upShiftCooldown > 0
                 ? `⏳ ${Math.ceil(upShiftCooldown)}s`
                 : !isGrounded && !hasAirShift
                 ? '⛔ المس الأرض'

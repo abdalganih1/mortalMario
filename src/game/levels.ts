@@ -1,6 +1,6 @@
 import { LevelData, Block } from '../types';
 
-export const LEVEL_DEFINITIONS: LevelData[] = [
+const BASE_LEVELS: LevelData[] = [
   // --- WORLD 1: OVERWORLD ---
   {
     world: 1,
@@ -551,6 +551,201 @@ export const LEVEL_DEFINITIONS: LevelData[] = [
     ],
   },
 ];
+
+// ================= 100-STAGE CLASSIC PACK =================
+// 8 handcrafted worlds + 92 generated classic-Mario stages = 100 total.
+
+function mulberry(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+let genBlockId = 90000;
+const nid = () => genBlockId++;
+
+// Classic pattern row: '?' = coin, M = mushroom, F = flower, B = brick
+function rowBlocks(x: number, y: number, s: string): Block[] {
+  const out: Block[] = [];
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (c === ' ') continue;
+    const bx = x + i * 32;
+    if (c === 'B') out.push({ id: nid(), x: bx, y, width: 32, height: 32, type: 'brick' });
+    else
+      out.push({
+        id: nid(),
+        x: bx,
+        y,
+        width: 32,
+        height: 32,
+        type: 'question',
+        content: c === 'M' ? 'mushroom' : c === 'F' ? 'flower' : 'coin',
+      });
+  }
+  return out;
+}
+
+function buildClassicLevels(): LevelData[] {
+  const out: LevelData[] = [];
+  const themes = ['overworld', 'underground', 'desert', 'airship', 'forest', 'castle', 'pit', 'netherrealm'] as const;
+  const themeAr: Record<string, string> = {
+    overworld: 'السهول',
+    underground: 'الكهوف',
+    desert: 'الصحراء',
+    airship: 'السفن الطائرة',
+    forest: 'الغابة',
+    castle: 'القلاع',
+    pit: 'الحفرة',
+    netherrealm: 'العالم السفلي',
+  };
+  const gruntKinds = ['baraka', 'liukang', 'kitana', 'shangtsung', 'kunglao', 'johnnycage', 'jax', 'sonya'] as const;
+  const rivalKinds = ['subzero', 'scorpion', 'noob', 'raiden', 'reptile', 'baraka', 'liukang', 'kitana', 'kunglao', 'shangtsung'] as const;
+  const TOTAL = 92;
+
+  for (let i = 0; i < TOTAL; i++) {
+    const stageNo = 9 + i; // human stage number (1-based)
+    const r = mulberry(4243 + i * 131);
+    const theme = themes[i % themes.length];
+    const diff = i / (TOTAL - 1); // 0 easy .. 1 brutal
+    const width = 3000 + Math.floor(r() * 700);
+    const endArena = width - 700;
+    const goalX = width - 160;
+    const blocks: Block[] = [];
+    const enemies: LevelData['enemies'] = [];
+    const isBossStage = i % 10 === 9;
+
+    const addGrunt = (x: number, y: number) => {
+      const roll = r();
+      if (i >= 10 && roll < 0.12 + diff * 0.25) {
+        const kind = gruntKinds[Math.floor(r() * gruntKinds.length)];
+        enemies.push({ type: 'kombatant', fighterKind: kind, x, y: 390, vx: -1.1, vy: 0, width: 32, height: 48, health: 4 + Math.floor(diff * 3), maxHealth: 4 + Math.floor(diff * 3), facing: 'left' });
+      } else if (i >= 6 && roll < 0.3) {
+        enemies.push({ type: roll < 0.2 ? 'spiny' : 'hammerbro', x, y: 398, vx: -1.0, vy: 0, width: 30, height: 32, health: 2, maxHealth: 2, facing: 'left' });
+      } else if (roll < 0.62) {
+        enemies.push({ type: 'koopa', x, y: 395, vx: -1.5, vy: 0, width: 32, height: 42, health: 2, maxHealth: 2, facing: 'left' });
+      } else {
+        enemies.push({ type: 'goomba', x, y: 400, vx: -1.2 - diff, vy: 0, width: 30, height: 30, health: 1, maxHealth: 1, facing: 'left' });
+      }
+    };
+
+    // Safe runway + starter row (classic 1-1 homage opening)
+    blocks.push(...createGround(0, 700, 440, 40, 'stone'));
+    blocks.push(...rowBlocks(260, 320, '?B?B?'));
+    addGrunt(430, 400);
+
+    let x = 700;
+    let pipes = 0;
+    while (x < endArena) {
+      const roll = r();
+      if (roll < 0.2 + diff * 0.16) {
+        // Lava pit gap (wider when harder) with high detour on big ones
+        const gap = Math.floor(90 + r() * (90 + diff * 130));
+        blocks.push(...createGround(x, gap, 450, 30, 'lava'));
+        if (gap > 150) blocks.push({ id: nid(), x: x + gap / 2 - 60, y: 300, width: 120, height: 28, type: 'stone' });
+        x += gap;
+      } else if (roll < 0.44) {
+        // Classic block row segment
+        const patterns = ['?B?B?', 'BMB', '?F?', 'B?B', '??M??', 'BFB', '?B?F?B?'];
+        const pat = patterns[Math.floor(r() * patterns.length)];
+        const segLen = Math.max(380, pat.length * 32 + 260);
+        blocks.push(...createGround(x, segLen, 440, 40, 'stone'));
+        blocks.push(...rowBlocks(x + 120, 320, pat));
+        addGrunt(x + 60, 400);
+        if (r() < 0.5 + diff * 0.3) addGrunt(x + segLen - 120, 400);
+        x += segLen;
+      } else if (roll < 0.6) {
+        // Iconic ascending pipe trio (one sometimes hides a warp)
+        const segLen = 420;
+        blocks.push(...createGround(x, segLen, 440, 40, 'stone'));
+        const heights = [60, 90, 120];
+        for (let k = 0; k < 3; k++) {
+          const px = x + 60 + k * 110;
+          const ph = heights[k];
+          const isWarpPipe = pipes % 7 === 3 && k === 1;
+          blocks.push({
+            id: nid(), x: px, y: 440 - ph, width: 48, height: ph, type: 'pipe',
+            ...(isWarpPipe ? { isWarp: true, warpTo: { x: x + 200, y: 160 } } : {}),
+          });
+          if (r() < 0.45) enemies.push({ type: 'piranha', x: px + 8, y: 440 - ph - 32, vx: 0, vy: 0, width: 32, height: 32, health: 2, maxHealth: 2, facing: 'left' });
+          pipes++;
+        }
+        // Sky bonus for warp pipes
+        if (pipes % 7 === 4) {
+          blocks.push({ id: nid(), x: x + 100, y: 190, width: 220, height: 28, type: 'stone' });
+          blocks.push(...rowBlocks(x + 130, 130, '?M?'));
+        }
+        addGrunt(x + 30, 400);
+        x += segLen;
+      } else if (roll < 0.76) {
+        // Stair pyramid (up then down) like the classics
+        const steps = 3 + Math.floor(r() * 3);
+        const segLen = steps * 32 * 2 + 200;
+        blocks.push(...createGround(x, segLen, 440, 40, 'stone'));
+        blocks.push(...createStairs(x + 80, 440, steps, 32, 1));
+        blocks.push(...createStairs(x + 80 + steps * 32, 440, steps, 32, -1));
+        if (r() < 0.5) blocks.push(...rowBlocks(x + 80 + Math.floor(steps / 2) * 32, 440 - (steps + 1) * 32, '?'));
+        addGrunt(x + segLen - 100, 400);
+        x += segLen;
+      } else {
+        // High platform road with rewards + guards below
+        const segLen = 480;
+        blocks.push(...createGround(x, segLen, 440, 40, 'stone'));
+        blocks.push({ id: nid(), x: x + 60, y: 300, width: 360, height: 28, type: 'stone' });
+        blocks.push(...rowBlocks(x + 120, 240, r() < 0.5 ? '?F?' : '?M?'));
+        addGrunt(x + 40, 400);
+        addGrunt(x + 300, 255);
+        x += segLen;
+      }
+    }
+
+    // Final arena + goal staircase
+    blocks.push(...createGround(endArena, 700, 440, 40, 'stone'));
+    blocks.push(...createStairs(goalX - 260, 440, 6, 32, 1));
+    blocks.push({ id: nid(), x: goalX, y: 220, width: 44, height: 220, type: 'stone' });
+
+    // Boss every 10th stage (end of each world)
+    if (isBossStage) {
+      const bCycle = Math.floor(i / 10) % 3;
+      const hp = Math.floor(110 + diff * 130);
+      const bx = endArena + 330;
+      if (bCycle === 0) {
+        enemies.push({ type: 'bowser', x: bx, y: 360, vx: -0.7, vy: 0, width: 72, height: 80, health: hp, maxHealth: hp, facing: 'left', attackTimer: 0, phase: 1 });
+      } else if (bCycle === 1) {
+        const kind = rivalKinds[Math.floor(r() * rivalKinds.length)];
+        enemies.push({ type: 'rival_ninja', fighterKind: kind, x: bx, y: 390, vx: -1.5, vy: 0, width: 32, height: 48, health: Math.floor(hp * 0.7), maxHealth: Math.floor(hp * 0.7), facing: 'left', attackTimer: 0, specialCooldown: 1.8 });
+      } else {
+        const kind = gruntKinds[Math.floor(r() * gruntKinds.length)];
+        enemies.push({ type: 'fighter_boss', fighterKind: kind, isBoss: true, x: bx, y: 380, vx: -1.5, vy: 0, width: 40, height: 58, health: hp, maxHealth: hp, facing: 'left', attackTimer: 0, specialCooldown: 1.6 });
+      }
+    }
+
+    out.push({
+      world: 9 + Math.floor(i / 10),
+      level: (i % 10) + 1,
+      name: `Classic Stage ${stageNo}`,
+      nameAr: `المرحلة ${stageNo}: ${themeAr[theme]}${isBossStage ? ' والزعيم' : ''}`,
+      theme,
+      width,
+      height: 480,
+      startX: 60,
+      startY: 380,
+      goalX,
+      hasBoss: isBossStage,
+      hasRivalBoss: isBossStage,
+      blocks,
+      enemies,
+    });
+  }
+  return out;
+}
+
+export const LEVEL_DEFINITIONS: LevelData[] = [...BASE_LEVELS, ...buildClassicLevels()];
 
 function createGround(startX: number, totalWidth: number, y: number, height: number, type: 'stone' | 'lava'): Block[] {
   const blocks: Block[] = [];

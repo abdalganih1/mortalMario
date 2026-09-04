@@ -5,7 +5,7 @@ import { CharacterSelectModal } from './components/CharacterSelectModal';
 import { SlidesGuideModal } from './components/SlidesGuideModal';
 
 export default function App() {
-  const [selectedFighter, setSelectedFighter] = useState<FighterId>('noob');
+  const [selectedFighter, setSelectedFighter] = useState<FighterId>('subzero');
   const [isCharacterSelectOpen, setIsCharacterSelectOpen] = useState<boolean>(true);
   const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
   const [gameState, setGameState] = useState<GameState>('character_select');

@@ -1,4 +1,4 @@
-export type FighterId = 'subzero' | 'scorpion' | 'noob' | 'raiden' | 'reptile' | 'baraka' | 'liukang' | 'kitana' | 'shangtsung';
+export type FighterId = 'subzero' | 'scorpion' | 'noob' | 'raiden' | 'reptile' | 'baraka' | 'liukang' | 'kitana' | 'shangtsung' | 'kunglao' | 'johnnycage' | 'jax' | 'sonya';
 
 export interface FighterConfig {
   id: FighterId;
@@ -61,7 +61,7 @@ export interface Player {
 
 export interface Enemy {
   id: number;
-  type: 'goomba' | 'koopa' | 'piranha' | 'bowser' | 'rival_ninja' | 'kombatant' | 'fighter_boss';
+  type: 'goomba' | 'koopa' | 'piranha' | 'bowser' | 'rival_ninja' | 'kombatant' | 'fighter_boss' | 'hammerbro' | 'spiny';
   fighterKind?: FighterId;
   isBoss?: boolean;
   isDizzy?: boolean;
@@ -72,6 +72,7 @@ export interface Enemy {
   inShell?: boolean;
   shellVx?: number;
   shellTimer?: number;
+  homeX?: number;
   x: number;
   y: number;
   vx: number;
@@ -123,7 +124,7 @@ export interface Item {
 
 export interface Projectile {
   id: number;
-  type: 'ice_blast' | 'spear' | 'shadow_clone' | 'shadow_ball' | 'bowser_fire' | 'fireball' | 'lightning' | 'acid_spit' | 'blade_spark' | 'dragon_fire' | 'steel_fan' | 'soul_skull';
+  type: 'ice_blast' | 'spear' | 'shadow_clone' | 'shadow_ball' | 'bowser_fire' | 'fireball' | 'lightning' | 'acid_spit' | 'blade_spark' | 'dragon_fire' | 'steel_fan' | 'soul_skull' | 'razor_hat' | 'cage_bolt' | 'shockwave' | 'energy_ring' | 'hammer';
   x: number;
   y: number;
   vx: number;
@@ -136,6 +137,7 @@ export interface Projectile {
   active: boolean;
   facing: 'left' | 'right';
   effect?: 'freeze' | 'pull' | 'tackle';
+  grav?: number;
 }
 
 export interface Particle {

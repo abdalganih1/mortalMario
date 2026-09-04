@@ -13,6 +13,7 @@ import {
 import { LEVEL_DEFINITIONS } from './levels';
 import { SpriteRenderer } from './sprites';
 import { soundManager } from '../audio/soundEffects';
+import { saveStageCleared, isMoveUnlocked, MOVE_UNLOCK, MOVE_NAMES, FIGHTERS } from './characters';
 import { MobileControls } from '../components/MobileControls';
 import { GameHUD } from '../components/GameHUD';
 
@@ -124,6 +125,23 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const gameStateRef = useRef<GameState>(gameState);
   gameStateRef.current = gameState;
   const levelIdxRef = useRef<number>(0);
+  const bossWarnRef = useRef<number>(0);
+  const [unlockedNow, setUnlockedNow] = useState<FighterId[]>([]);
+
+  // Locked-move feedback (moves unlock stage by stage!)
+  const lockedMsg = (move: keyof typeof MOVE_UNLOCK) => {
+    soundManager.playError();
+    floatingTextsRef.current.push({
+      id: Math.random(),
+      text: `🔒 ${MOVE_NAMES[move]} — ينفتح بالمرحلة ${MOVE_UNLOCK[move] + 1}!`,
+      x: playerRef.current.x + playerRef.current.width / 2,
+      y: playerRef.current.y - 14,
+      vy: -1.2,
+      color: '#fca5a5',
+      alpha: 1,
+      scale: 1.15,
+    });
+  };
 
   // Double-tap timing tracking refs (for Jump -> Up Shift, Left/Right -> Dash, Punch -> Close Special)
   const lastLeftTapRef = useRef<number>(0);
@@ -179,12 +197,17 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       liukang: 'shangtsung',
       kitana: 'baraka',
       shangtsung: 'liukang',
+      kunglao: 'shangtsung',
+      johnnycage: 'sonya',
+      jax: 'johnnycage',
+      sonya: 'jax',
     };
     const assignedRival = rivalMap[playerChar] || 'scorpion';
 
     enemiesRef.current = levelDef.enemies.map((e, idx) => ({
       ...e,
       id: idx + 1,
+      homeX: e.x,
       isAlive: true,
       isFrozen: false,
       freezeTimer: 0,
@@ -409,6 +432,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         p.hasAirShift = true;
       }
 
+      // Up-shift unlocks at stage 4 — earn it!
+      if (!isMoveUnlocked('upshift', levelIdxRef.current)) {
+        lockedMsg('upshift');
+        return;
+      }
+
       // 1. Check cooldown (airborne only — ground is always free)
       if ((p.upShiftCooldown || 0) > 0) {
         soundManager.playError();
@@ -489,7 +518,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         });
       }
     } else {
-      // Horizontal directional dash sprint
+      // Horizontal directional dash sprint (unlocks at stage 2!)
+      if (!isMoveUnlocked('dash', levelIdxRef.current)) {
+        lockedMsg('dash');
+        return;
+      }
       if (p.dashCooldown > 0 || p.isDashing) return;
 
       if (direction === 'left') {
@@ -644,6 +677,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         }
       }
     } else if (type === 'special1') {
+      // SPECIAL 1 (ranged): unlocks at stage 3!
+      if (!isMoveUnlocked('special1', levelIdxRef.current)) {
+        lockedMsg('special1');
+        return;
+      }
       // SPECIAL 1 (ranged): Sub-Zero / Scorpion / Noob / Raiden / Reptile / Baraka / Liu Kang / Kitana / Shang Tsung
       if (p.special1Cooldown > 0) return;
       p.special1Cooldown = 1.8;
@@ -898,8 +936,130 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           alpha: 1,
           scale: 1.2,
         });
+      } else if (p.character === 'kunglao') {
+        // KUNG LAO: RAZOR HAT THROW
+        soundManager.playFanThrow();
+        projectilesRef.current.push({
+          id: Math.random(),
+          type: 'razor_hat',
+          x: p.facing === 'right' ? p.x + p.width + 5 : p.x - 30,
+          y: p.y + 12,
+          vx: p.facing === 'right' ? 8.2 : -8.2,
+          vy: 0,
+          width: 30,
+          height: 18,
+          damage: 26,
+          owner: 'player',
+          duration: 3.0,
+          active: true,
+          facing: p.facing,
+        });
+
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'HAT THROW! 🎩',
+          x: p.x + p.width / 2,
+          y: p.y - 12,
+          vy: -1.5,
+          color: '#eab308',
+          alpha: 1,
+          scale: 1.2,
+        });
+      } else if (p.character === 'johnnycage') {
+        // JOHNNY CAGE: GREEN FORCEBALL BOLT
+        soundManager.playForceball();
+        projectilesRef.current.push({
+          id: Math.random(),
+          type: 'cage_bolt',
+          x: p.facing === 'right' ? p.x + p.width + 5 : p.x - 26,
+          y: p.y + 14,
+          vx: p.facing === 'right' ? 7.4 : -7.4,
+          vy: 0,
+          width: 24,
+          height: 24,
+          damage: 26,
+          owner: 'player',
+          duration: 3.0,
+          active: true,
+          facing: p.facing,
+        });
+
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'CAGE BOLT! 🕶️',
+          x: p.x + p.width / 2,
+          y: p.y - 12,
+          vy: -1.5,
+          color: '#4ade80',
+          alpha: 1,
+          scale: 1.2,
+        });
+      } else if (p.character === 'jax') {
+        // JAX: GROUND SHOCKWAVE
+        soundManager.playBlockHit();
+        screenShakeRef.current = 7;
+        projectilesRef.current.push({
+          id: Math.random(),
+          type: 'shockwave',
+          x: p.facing === 'right' ? p.x + p.width + 5 : p.x - 34,
+          y: p.y + p.height - 26,
+          vx: p.facing === 'right' ? 6.0 : -6.0,
+          vy: 0,
+          width: 34,
+          height: 26,
+          damage: 30,
+          owner: 'player',
+          duration: 3.0,
+          active: true,
+          facing: p.facing,
+        });
+
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'SHOCKWAVE! 🦾',
+          x: p.x + p.width / 2,
+          y: p.y - 12,
+          vy: -1.5,
+          color: '#94a3b8',
+          alpha: 1,
+          scale: 1.2,
+        });
+      } else if (p.character === 'sonya') {
+        // SONYA: ENERGY RING
+        soundManager.playLightning();
+        projectilesRef.current.push({
+          id: Math.random(),
+          type: 'energy_ring',
+          x: p.facing === 'right' ? p.x + p.width + 5 : p.x - 26,
+          y: p.y + 14,
+          vx: p.facing === 'right' ? 7.8 : -7.8,
+          vy: 0,
+          width: 24,
+          height: 24,
+          damage: 24,
+          owner: 'player',
+          duration: 3.0,
+          active: true,
+          facing: p.facing,
+        });
+
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'ENERGY RING! 💖',
+          x: p.x + p.width / 2,
+          y: p.y - 12,
+          vy: -1.5,
+          color: '#f472b6',
+          alpha: 1,
+          scale: 1.2,
+        });
       }
     } else if (type === 'special2') {
+      // SPECIAL 2 (close): unlocks at stage 5!
+      if (!isMoveUnlocked('special2', levelIdxRef.current)) {
+        lockedMsg('special2');
+        return;
+      }
       // SPECIAL 2 (close): Sub-Zero / Scorpion / Noob / Raiden / Reptile / Baraka / Liu Kang / Kitana / Shang Tsung
       if (p.special2Cooldown > 0) return;
       p.special2Cooldown = 1.8;
@@ -1224,6 +1384,119 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             applyDamageToEnemy(e, 3, 'tackle');
           }
         });
+      } else if (p.character === 'kunglao') {
+        // --- KUNG LAO HAT CYCLONE: whirling tornado dash ---
+        soundManager.playFanThrow();
+        screenShakeRef.current = 8;
+        p.isDashing = true;
+        p.dashTimer = 0.5;
+        p.isInvincible = true;
+        p.invincibleTimer = 0.55;
+        p.vx = p.facing === 'right' ? 9.0 : -9.0;
+
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'HAT CYCLONE! 🎩🌀',
+          x: p.x,
+          y: p.y - 14,
+          vy: -1.6,
+          color: '#eab308',
+          alpha: 1,
+          scale: 1.4,
+        });
+
+        enemiesRef.current.forEach(e => {
+          if (e.isAlive && Math.abs(e.x - p.x) < 85 && Math.abs(e.y - p.y) < 50) {
+            applyDamageToEnemy(e, 3, 'blades');
+          }
+        });
+      } else if (p.character === 'johnnycage') {
+        // --- JOHNNY CAGE SHADOW UPPERCUT: the famous one! ---
+        soundManager.playUppercut();
+        screenShakeRef.current = 9;
+
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: "SHADOW UPPERCUT! HERE'S JOHNNY! 🕶️",
+          x: p.x,
+          y: p.y - 14,
+          vy: -1.6,
+          color: '#4ade80',
+          alpha: 1,
+          scale: 1.4,
+        });
+
+        enemiesRef.current.forEach(e => {
+          if (e.isAlive && Math.abs(e.x - p.x) < 80 && Math.abs(e.y - p.y) < 65) {
+            applyDamageToEnemy(e, 3, 'uppercut');
+            if (e.isAlive) {
+              e.vy = -10;
+              e.vx = p.facing === 'right' ? 3.5 : -3.5;
+              if (e.type === 'kombatant' || e.type === 'fighter_boss' || e.type === 'rival_ninja') {
+                e.isDizzy = true;
+                e.dizzyTimer = 2.0;
+              }
+            }
+          }
+        });
+      } else if (p.character === 'jax') {
+        // --- JAX GOTCHA GRAB: rushing steel-fist combo ---
+        soundManager.playPunch();
+        screenShakeRef.current = 9;
+        p.isDashing = true;
+        p.dashTimer = 0.5;
+        p.isInvincible = true;
+        p.invincibleTimer = 0.55;
+        p.vx = p.facing === 'right' ? 8.0 : -8.0;
+
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'GOTCHA GRAB! 🦾👊',
+          x: p.x,
+          y: p.y - 14,
+          vy: -1.6,
+          color: '#94a3b8',
+          alpha: 1,
+          scale: 1.4,
+        });
+
+        enemiesRef.current.forEach(e => {
+          if (e.isAlive && Math.abs(e.x - p.x) < 80 && Math.abs(e.y - p.y) < 50) {
+            applyDamageToEnemy(e, 2, 'punch');
+            applyDamageToEnemy(e, 1, 'punch');
+          }
+        });
+      } else if (p.character === 'sonya') {
+        // --- SONYA SCISSOR KICK: flying double kick ---
+        soundManager.playTorpedo();
+        screenShakeRef.current = 8;
+        p.isDashing = true;
+        p.dashTimer = 0.55;
+        p.isInvincible = true;
+        p.invincibleTimer = 0.6;
+        p.vy = -2;
+        p.vx = p.facing === 'right' ? 10.5 : -10.5;
+
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'SCISSOR KICK! 💖🦵',
+          x: p.x,
+          y: p.y - 14,
+          vy: -1.6,
+          color: '#f472b6',
+          alpha: 1,
+          scale: 1.4,
+        });
+
+        enemiesRef.current.forEach(e => {
+          if (e.isAlive && Math.abs(e.x - p.x) < 90 && Math.abs(e.y - p.y) < 55) {
+            applyDamageToEnemy(e, 2, 'projectile');
+            if (e.isAlive) {
+              e.vy = -6;
+              e.vx = p.facing === 'right' ? 4 : -4;
+            }
+          }
+        });
       }
     }
   };
@@ -1472,11 +1745,15 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   // Complete level
   const handleStageClear = () => {
     soundManager.playVictory();
+    // Persist progress + reveal newly unlocked fighters!
+    const newly = saveStageCleared(levelIdxRef.current);
+    setUnlockedNow(newly);
     setGameState('stage_clear');
   };
 
   // Next level transition
   const handleNextLevel = () => {
+    setUnlockedNow([]);
     if (currentLevelIndex < LEVEL_DEFINITIONS.length - 1) {
       setCurrentLevelIndex(prev => prev + 1);
       loadLevel(currentLevelIndex + 1);
@@ -1804,7 +2081,31 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
     // Check goal flag/finish reach
     if (p.x >= levelDef.goalX) {
-      handleStageClear();
+      const bossAlive = enemiesRef.current.some(
+        e => e.isAlive && (e.type === 'bowser' || e.type === 'rival_ninja' || e.type === 'fighter_boss' || (e.type === 'kombatant' && e.isBoss))
+      );
+      if (bossAlive) {
+        // NO ESCAPING a boss stage — kill the boss first!
+        p.x = levelDef.goalX - 14;
+        if (p.vx > 0) p.vx = 0;
+        const nowMs = performance.now();
+        if (nowMs - bossWarnRef.current > 2200) {
+          bossWarnRef.current = nowMs;
+          soundManager.playError();
+          floatingTextsRef.current.push({
+            id: Math.random(),
+            text: '🔒 اقتل الزعيم أولاً! NO ESCAPE!',
+            x: p.x + p.width / 2,
+            y: p.y - 22,
+            vy: -1.4,
+            color: '#ef4444',
+            alpha: 1,
+            scale: 1.3,
+          });
+        }
+      } else {
+        handleStageClear();
+      }
     }
 
     // Fell off map
@@ -1939,6 +2240,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       if (!proj.active) return;
       proj.x += proj.vx;
       proj.y += proj.vy;
+      if (proj.grav) proj.vy += proj.grav;
       proj.duration -= dt;
       if (proj.duration <= 0) proj.active = false;
 
@@ -2072,13 +2374,14 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           return;
         }
 
-        // Bowser patrols bridge
+        // Bowser patrols his home arena (no wandering off!)
+        const homeX = enemy.homeX ?? enemy.x;
         enemy.x += enemy.vx;
-        if (enemy.x < 1750) {
-          enemy.vx = 0.6;
+        if (enemy.x < homeX - 240) {
+          enemy.vx = Math.abs(enemy.vx) || 0.6;
           enemy.facing = 'right';
-        } else if (enemy.x > 2200) {
-          enemy.vx = -0.6;
+        } else if (enemy.x > homeX + 240) {
+          enemy.vx = -(Math.abs(enemy.vx) || 0.6);
           enemy.facing = 'left';
         }
 
@@ -2252,6 +2555,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             liukang: 'dragon_fire',
             kitana: 'steel_fan',
             shangtsung: 'soul_skull',
+            kunglao: 'razor_hat',
+            johnnycage: 'cage_bolt',
+            jax: 'shockwave',
+            sonya: 'energy_ring',
             subzero: 'ice_blast',
             scorpion: 'spear',
             raiden: 'lightning',
@@ -2316,6 +2623,60 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         if (enemy.y > levelDef.height + 80) {
           enemy.y = levelDef.height - enemy.height - 40;
           enemy.vy = 0;
+        }
+      } else if (enemy.type === 'hammerbro' || enemy.type === 'spiny') {
+        // --- HAMMER BRO & SPINY: classic Mario march + gravity, bro lobs hammers ---
+        enemy.vy = (enemy.vy || 0) + 0.5;
+        if (enemy.vy > 10) enemy.vy = 10;
+        enemy.x += enemy.vx;
+        enemy.y += enemy.vy;
+        blocksRef.current.forEach(block => {
+          if (block.isDestroyed || block.type === 'lava' || block.type === 'bridge' || block.type === 'axe') return;
+          if (
+            (enemy.vy || 0) >= 0 &&
+            enemy.x + enemy.width > block.x + 2 &&
+            enemy.x < block.x + block.width - 2 &&
+            enemy.y + enemy.height > block.y &&
+            enemy.y + enemy.height - (enemy.vy || 0) <= block.y + 10
+          ) {
+            enemy.y = block.y - enemy.height;
+            enemy.vy = 0;
+          }
+          if (
+            enemy.x < block.x + block.width &&
+            enemy.x + enemy.width > block.x &&
+            enemy.y < block.y + block.height &&
+            enemy.y + enemy.height > block.y + 6
+          ) {
+            enemy.vx = -(enemy.vx || 1);
+            enemy.facing = enemy.vx > 0 ? 'right' : 'left';
+            if (enemy.x + enemy.width / 2 < block.x + block.width / 2) enemy.x = block.x - enemy.width;
+            else enemy.x = block.x + block.width;
+          }
+        });
+        if (enemy.type === 'hammerbro' && Math.abs(p.x - enemy.x) < 430) {
+          enemy.attackTimer = (enemy.attackTimer || 0) + dt;
+          if (enemy.attackTimer > 2.6) {
+            enemy.attackTimer = 0;
+            const dir = p.x < enemy.x ? -1 : 1;
+            soundManager.playFanThrow();
+            projectilesRef.current.push({
+              id: Math.random(),
+              type: 'hammer',
+              x: enemy.x + enemy.width / 2 - 11,
+              y: enemy.y - 8,
+              vx: dir * 3.6,
+              vy: -7.5,
+              width: 22,
+              height: 22,
+              damage: 1,
+              owner: 'enemy',
+              duration: 4.0,
+              active: true,
+              facing: enemy.facing,
+              grav: 0.35,
+            });
+          }
         }
       } else if (enemy.type === 'piranha') {
         // Piranha snaps up and down from pipe
@@ -2464,10 +2825,26 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           // Dashing or sliding into enemy damages them safely!
           applyDamageToEnemy(enemy, 1, p.isSliding ? 'slide' : 'dash_tackle');
         } else if (p.vy > 0 && p.y + p.height - p.vy <= enemy.y + 12 && enemy.type !== 'bowser' && enemy.type !== 'kombatant' && enemy.type !== 'fighter_boss' && enemy.type !== 'rival_ninja') {
-          // Classic Mario Stomp jump!
-          p.vy = -8.5; // bounce up
-          applyDamageToEnemy(enemy, 1, 'stomp');
-          soundManager.playPunch();
+          if (enemy.type === 'spiny') {
+            // SPINY PUNISHES stomps — punch it, don't jump on it!
+            p.vy = -7;
+            handlePlayerHurt(10);
+            floatingTextsRef.current.push({
+              id: Math.random(),
+              text: 'SPIKY! 🦔',
+              x: p.x + p.width / 2,
+              y: p.y - 12,
+              vy: -1.4,
+              color: '#fca5a5',
+              alpha: 1,
+              scale: 1.1,
+            });
+          } else {
+            // Classic Mario Stomp jump!
+            p.vy = -8.5; // bounce up
+            applyDamageToEnemy(enemy, 1, 'stomp');
+            soundManager.playPunch();
+          }
         } else {
           // Player hurt
           handlePlayerHurt();
@@ -2920,6 +3297,16 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         SpriteRenderer.drawFan(ctx, proj);
       } else if (proj.type === 'soul_skull') {
         SpriteRenderer.drawSkull(ctx, proj);
+      } else if (proj.type === 'razor_hat') {
+        SpriteRenderer.drawHat(ctx, proj);
+      } else if (proj.type === 'cage_bolt') {
+        SpriteRenderer.drawBolt(ctx, proj);
+      } else if (proj.type === 'shockwave') {
+        SpriteRenderer.drawWave(ctx, proj);
+      } else if (proj.type === 'energy_ring') {
+        SpriteRenderer.drawRing(ctx, proj);
+      } else if (proj.type === 'hammer') {
+        SpriteRenderer.drawHammer(ctx, proj);
       } else if (proj.type === 'shadow_ball') {
         // NOOB SAIBOT DARK VORTEX
         ctx.save();
@@ -3094,6 +3481,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         player={playerRef.current}
         currentWorld={LEVEL_DEFINITIONS[currentLevelIndex].world}
         currentLevel={LEVEL_DEFINITIONS[currentLevelIndex].level}
+        stageIdx={currentLevelIndex}
         timeRemaining={timeRemaining}
         bossEnemy={bossEnemyState}
         onOpenGuide={onOpenGuide}
@@ -3127,6 +3515,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         upShiftCooldown={upShiftCd}
         hasAirShift={hasAirShiftState}
         isGrounded={isGroundedState}
+        rangedLocked={currentLevelIndex < 2}
+        upshiftLocked={currentLevelIndex < 3}
       />
 
       {/* Stage Clear Overlay */}
@@ -3139,6 +3529,14 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           <p className="text-sm text-neutral-300 mt-2 max-w-sm">
             أحسنت! تم تحرير هذه المنطقة بنجاح بواسطة {playerRef.current.character.toUpperCase()}.
           </p>
+          {unlockedNow.length > 0 && (
+            <div className="mt-3 bg-gradient-to-r from-amber-900/80 to-yellow-900/80 border-2 border-amber-400 rounded-xl px-5 py-3 shadow-[0_0_25px_rgba(245,158,11,0.5)] animate-pulse">
+              <p className="text-amber-300 font-black text-sm">🔓 مقاتلون جدد انفتحوا!</p>
+              <p className="text-white font-black text-base mt-1">
+                {unlockedNow.map(id => `${FIGHTERS[id].avatar} ${FIGHTERS[id].nameAr}`).join(' • ')}
+              </p>
+            </div>
+          )}
           <p className="text-xs text-neutral-500 mt-1 font-mono">اضغط Enter ⏎ للانتقال للعالم التالي</p>
           <div className="mt-6 flex gap-3">
             <button

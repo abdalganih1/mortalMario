@@ -1,11 +1,12 @@
 import React from 'react';
 import { Player, Enemy } from '../types';
-import { FIGHTERS } from '../game/characters';
+import { FIGHTERS, MOVE_UNLOCK, MOVE_NAMES } from '../game/characters';
 
 interface GameHUDProps {
   player: Player;
   currentWorld: number;
   currentLevel: number;
+  stageIdx: number;
   timeRemaining: number;
   bossEnemy: Enemy | null;
   onOpenGuide: () => void;
@@ -20,17 +21,20 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   player,
   currentWorld,
   currentLevel,
+  stageIdx,
   timeRemaining,
   bossEnemy,
   onOpenGuide,
   onOpenSelectFighter,
   onToggleSound,
   isMuted,
-  onTogglePause,
   isPaused,
+  onTogglePause,
 }) => {
   const fighter = FIGHTERS[player.character];
   const bloodPct = Math.max(0, ((player.blood ?? 100) / (player.maxBlood ?? 100)) * 100);
+  // Next move to unlock (progression hint)
+  const nextMove = (Object.keys(MOVE_UNLOCK) as (keyof typeof MOVE_UNLOCK)[]).find(m => stageIdx < MOVE_UNLOCK[m]);
 
   return (
     <div
@@ -94,6 +98,12 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             <span className="text-neutral-400 text-[10px]">SCORE</span>
             <span className="text-white">{player.score.toString().padStart(6, '0')}</span>
           </div>
+
+          {nextMove && (
+            <div className="hidden sm:flex items-center gap-1" title="الحركة القادمة">
+              <span className="text-fuchsia-300 text-[10px] font-black">🔓 {MOVE_NAMES[nextMove]} • مرحلة {MOVE_UNLOCK[nextMove] + 1}</span>
+            </div>
+          )}
         </div>
 
         {/* Right: Controls & Guide Quick Actions */}

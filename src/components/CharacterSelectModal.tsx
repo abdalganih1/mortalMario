@@ -1,6 +1,6 @@
 import React from 'react';
 import { FighterId } from '../types';
-import { FIGHTERS } from '../game/characters';
+import { FIGHTERS, FIGHTER_UNLOCK, isFighterUnlocked } from '../game/characters';
 import { soundManager } from '../audio/soundEffects';
 
 interface CharacterSelectModalProps {
@@ -21,15 +21,22 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
   if (!isOpen) return null;
 
   const fighters = Object.values(FIGHTERS);
-  const current = FIGHTERS[selectedFighter];
+  // Never show a locked fighter as selected
+  const effectiveFighter = isFighterUnlocked(selectedFighter) ? selectedFighter : 'subzero';
+  const current = FIGHTERS[effectiveFighter];
 
   const handlePick = (id: FighterId) => {
+    if (!isFighterUnlocked(id)) {
+      soundManager.playError();
+      return;
+    }
     soundManager.playPunch();
     onSelectFighter(id);
   };
 
   const handleConfirm = () => {
     soundManager.playDash();
+    if (effectiveFighter !== selectedFighter) onSelectFighter(effectiveFighter);
     onStartGame();
   };
 
@@ -48,21 +55,25 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
             اختر مقاتلك للمغامرة
           </h1>
           <p className="text-xs text-neutral-400">
-            اسحب أفقياً لتصفح المقاتلين التسعة 👉 ثم اضغط على بطاقة المقاتل
+            اسحب أفقياً لتصفح المقاتلين الـ13 👉 المقفل ينفتح بالفوز بالمراحل
           </p>
         </div>
 
         {/* Fighter Cards — swipe carousel on mobile, scrollable grid on desktop */}
         <div className="flex sm:grid sm:grid-cols-3 gap-2.5 sm:gap-3 overflow-x-auto sm:overflow-y-auto sm:overflow-x-hidden sm:max-h-[46vh] snap-x snap-mandatory sm:snap-none pb-2 sm:pb-1 -mx-1 px-1">
           {fighters.map(fighter => {
-            const isSelected = selectedFighter === fighter.id;
+            const isSelected = effectiveFighter === fighter.id;
+            const locked = !isFighterUnlocked(fighter.id);
             return (
               <button
                 key={fighter.id}
                 id={`select-fighter-${fighter.id}`}
                 onClick={() => handlePick(fighter.id)}
+                disabled={locked}
                 className={`group relative p-3 sm:p-4 rounded-xl border-2 text-right transition-all flex flex-col justify-between overflow-hidden snap-center shrink-0 w-[68vw] max-w-[240px] sm:w-auto sm:max-w-none min-h-[150px] sm:min-h-[132px] ${
-                  isSelected
+                  locked
+                    ? 'border-neutral-800 bg-neutral-950/80 opacity-50 saturate-0 cursor-not-allowed'
+                    : isSelected
                     ? 'border-red-500 bg-neutral-900 shadow-[0_0_20px_rgba(239,68,68,0.3)] scale-[1.02]'
                     : 'border-neutral-800 bg-neutral-900/60 hover:border-neutral-700 hover:bg-neutral-900/90 opacity-80'
                 }`}
@@ -75,7 +86,7 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl">{fighter.avatar}</span>
+                    <span className="text-2xl">{locked ? '🔒' : fighter.avatar}</span>
                     <span
                       className="text-xs font-mono font-black uppercase px-2 py-0.5 rounded-full"
                       style={{
@@ -100,7 +111,7 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                     {fighter.id === 'noob' ? '✨ حركة محدثة:' : 'المهارة الرئيسية:'}
                   </span>
                   <span className="text-xs font-bold text-neutral-200 block truncate">
-                    {fighter.special1Name}
+                    {locked ? `يفتح بالمرحلة ${FIGHTER_UNLOCK[fighter.id] + 1} 🏆` : fighter.special1Name}
                   </span>
                 </div>
               </button>
