@@ -37,7 +37,7 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-md select-none overflow-y-auto">
       <div
         id="character-select-box"
-        className="w-full max-w-3xl bg-neutral-950 border-2 border-red-800/80 rounded-2xl shadow-2xl p-5 sm:p-7 flex flex-col gap-6 text-neutral-100"
+        className="w-full max-w-3xl max-h-[94vh] overflow-y-auto bg-neutral-950 border-2 border-red-800/80 rounded-2xl shadow-2xl p-4 sm:p-7 flex flex-col gap-4 sm:gap-6 text-neutral-100"
       >
         {/* Title */}
         <div className="text-center space-y-1">
@@ -52,8 +52,8 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
           </p>
         </div>
 
-        {/* Fighter Cards — swipe carousel on mobile, grid on desktop */}
-        <div className="flex sm:grid sm:grid-cols-3 gap-2.5 sm:gap-3 overflow-x-auto sm:overflow-visible snap-x snap-mandatory sm:snap-none pb-2 -mx-1 px-1">
+        {/* Fighter Cards — swipe carousel on mobile, scrollable grid on desktop */}
+        <div className="flex sm:grid sm:grid-cols-3 gap-2.5 sm:gap-3 overflow-x-auto sm:overflow-y-auto sm:overflow-x-hidden sm:max-h-[46vh] snap-x snap-mandatory sm:snap-none pb-2 sm:pb-1 -mx-1 px-1">
           {fighters.map(fighter => {
             const isSelected = selectedFighter === fighter.id;
             return (
@@ -61,7 +61,7 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                 key={fighter.id}
                 id={`select-fighter-${fighter.id}`}
                 onClick={() => handlePick(fighter.id)}
-                className={`group relative p-4 rounded-xl border-2 text-right transition-all flex flex-col justify-between overflow-hidden snap-center shrink-0 w-[68vw] max-w-[240px] sm:w-auto sm:max-w-none min-h-[150px] ${
+                className={`group relative p-3 sm:p-4 rounded-xl border-2 text-right transition-all flex flex-col justify-between overflow-hidden snap-center shrink-0 w-[68vw] max-w-[240px] sm:w-auto sm:max-w-none min-h-[150px] sm:min-h-[132px] ${
                   isSelected
                     ? 'border-red-500 bg-neutral-900 shadow-[0_0_20px_rgba(239,68,68,0.3)] scale-[1.02]'
                     : 'border-neutral-800 bg-neutral-900/60 hover:border-neutral-700 hover:bg-neutral-900/90 opacity-80'

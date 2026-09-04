@@ -402,7 +402,14 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         : '#a855f7';
 
     if (isUpward) {
-      // 1. Check cooldown (4.5 seconds)
+      // Grounded = INSTANT refresh: the moment you touch earth the shift is ready again!
+      // (double up-shifts in a row work — no timer lock while grounded)
+      if (p.isGrounded) {
+        p.upShiftCooldown = 0;
+        p.hasAirShift = true;
+      }
+
+      // 1. Check cooldown (airborne only — ground is always free)
       if ((p.upShiftCooldown || 0) > 0) {
         soundManager.playError();
         floatingTextsRef.current.push({
@@ -1309,11 +1316,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       playerRef.current.score += enemy.type === 'bowser' || enemy.isBoss ? 5000 : 200;
 
       if (enemy.type === 'bowser' || enemy.isBoss) {
-        soundManager.playVictory();
-        // Trigger victory after brief fanfare
-        setTimeout(() => {
-          setGameState('victory');
-        }, 2200);
+        // Mid-game bosses open the road onward — only the FINAL boss ends the game!
+        handleBossDefeated();
       } else {
         soundManager.playPunch();
       }
@@ -1480,6 +1484,18 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     } else {
       setGameState('victory');
     }
+  };
+
+  // Boss defeated: FINAL level -> victory screen, any earlier boss -> stage clear (worlds keep coming!)
+  const handleBossDefeated = () => {
+    soundManager.playVictory();
+    setTimeout(() => {
+      if (levelIdxRef.current >= LEVEL_DEFINITIONS.length - 1) {
+        setGameState('victory');
+      } else {
+        setGameState('stage_clear');
+      }
+    }, 2200);
   };
 
   // MAIN 60 FPS GAME LOOP
@@ -2051,8 +2067,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           enemy.y += enemy.vy;
           if (enemy.y > 520) {
             enemy.isAlive = false;
-            soundManager.playVictory();
-            setTimeout(() => setGameState('victory'), 2000);
+            handleBossDefeated();
           }
           return;
         }
@@ -2997,7 +3012,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     // JUMP: single press jumps, double-tap triggers Upward Super Shift!
     if (action === 'jump') {
       keysRef.current.jump = true;
-      if (now - lastJumpTapRef.current < 350) {
+      if (now - lastJumpTapRef.current < 450) {
         triggerDash('up');
         lastJumpTapRef.current = 0;
       } else {
@@ -3167,10 +3182,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         <div className="absolute inset-0 z-40 bg-black/90 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
           <span className="text-5xl mb-2">👑</span>
           <h2 className="text-2xl sm:text-4xl font-black text-amber-400 uppercase tracking-widest drop-shadow-[0_0_20px_rgba(245,158,11,0.8)]">
-            VICTORY • BOWSER DEFEATED!
+            VICTORY • SHANG TSUNG DEFEATED!
           </h2>
           <p className="text-sm sm:text-base text-neutral-200 mt-3 max-w-md">
-            تم سحق باوزر وتحرير مملكة الفطر! أثبت مقاتلو مورتال كومبات هيمنتهم المطلقة.
+            تم سحق شانغ تسونغ وتحرير كل العوالم الثمانية! أثبت مقاتلو مورتال كومبات هيمنتهم المطلقة.
           </p>
           <div className="mt-4 bg-neutral-900/80 border border-neutral-700 rounded-xl p-4 text-xs sm:text-sm text-neutral-300 font-mono">
             <p>النقاط النهائية: <span className="text-amber-400 font-bold">{playerRef.current.score}</span></p>
