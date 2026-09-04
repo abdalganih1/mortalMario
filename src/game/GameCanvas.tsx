@@ -1782,19 +1782,49 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Debug hook (?debug=1): state injection for automated testing
+    try {
+      if (new URLSearchParams(window.location.search).get('debug') === '1') {
+        (window as unknown as Record<string, unknown>).__mmk = {
+          player: playerRef.current,
+          enemies: enemiesRef.current,
+          loadLevel,
+          triggerAttack,
+          triggerDash,
+          count: LEVEL_DEFINITIONS.length,
+        };
+      }
+    } catch {
+      /* ignore */
+    }
+
     let animationFrameId: number;
     let lastTime = performance.now();
 
     const gameLoop = (now: number) => {
+      // Re-register FIRST so no exception can ever freeze the game
+      animationFrameId = requestAnimationFrame(gameLoop);
       const dt = Math.min((now - lastTime) / 1000, 0.05); // cap delta time
       lastTime = now;
 
-      if (gameState === 'playing') {
-        updateGame(dt);
+      try {
+        if (gameState === 'playing') {
+          updateGame(dt);
+        }
+        renderGame(ctx, canvas);
+      } catch (err) {
+        // Survive + sanitize: NaN entities get reset instead of killing the loop
+        console.warn('gameLoop recovered:', err);
+        const p = playerRef.current;
+        if (!isFinite(p.x) || !isFinite(p.y) || !isFinite(p.vx) || !isFinite(p.vy)) {
+          p.x = LEVEL_DEFINITIONS[currentLevelIndex]?.startX ?? 60;
+          p.y = LEVEL_DEFINITIONS[currentLevelIndex]?.startY ?? 380;
+          p.vx = 0;
+          p.vy = 0;
+        }
+        enemiesRef.current = enemiesRef.current.filter(e => isFinite(e.x) && isFinite(e.y));
+        projectilesRef.current = projectilesRef.current.filter(pr => isFinite(pr.x) && isFinite(pr.y));
       }
-
-      renderGame(ctx, canvas);
-      animationFrameId = requestAnimationFrame(gameLoop);
     };
 
     animationFrameId = requestAnimationFrame(gameLoop);

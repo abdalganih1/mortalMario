@@ -698,6 +698,218 @@ export class SpriteRenderer {
     ctx.restore();
   }
 
+  // Draw Noob's Shadow Clone sprinting forward
+  static drawShadowClone(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    ctx.translate(proj.x + proj.width / 2, proj.y + proj.height);
+    if (proj.facing === 'left') {
+      ctx.scale(-1, 1);
+    }
+
+    // Ominous purple/black shadow smoke
+    ctx.shadowBlur = 16;
+    ctx.shadowColor = '#7c3aed';
+
+    // Shadow silhouette
+    ctx.fillStyle = '#0a0a0f';
+    const h = 42;
+    const topY = -h;
+
+    // Body
+    ctx.fillRect(-9, topY + 14, 18, 16);
+    // Head
+    ctx.beginPath();
+    ctx.arc(0, topY + 7, 8, 0, Math.PI * 2);
+    ctx.fill();
+    // Glowing white phantom eyes
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(2, topY + 5, 4, 2);
+
+    // Sprinting arms outstretched to grab enemy
+    ctx.fillStyle = '#14141d';
+    ctx.fillRect(2, topY + 14, 18, 7);
+    ctx.fillRect(16, topY + 12, 7, 10);
+
+    // Sprinting phantom legs
+    const legPhase = Math.sin(Date.now() / 60) * 8;
+    ctx.fillRect(-8, topY + 28, 7, 14 + legPhase);
+    ctx.fillRect(2, topY + 28, 7, 14 - legPhase);
+
+    // Shadow smoke trails
+    ctx.fillStyle = 'rgba(124, 58, 237, 0.4)';
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.arc(-15 - i * 8, topY + 20 + Math.sin(i * 2 + Date.now() / 100) * 5, 6 - i, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  // Draw Sub-Zero's Ice Blast
+  static drawIceBlast(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    ctx.translate(proj.x + proj.width / 2, proj.y + proj.height / 2);
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = '#00f0ff';
+
+    // Rotating ice crystal cluster
+    const angle = Date.now() / 120;
+    ctx.rotate(angle);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(0, 0, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#00d2ff';
+    for (let i = 0; i < 6; i++) {
+      const a = (i * Math.PI) / 3;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 4, Math.sin(a) * 4);
+      ctx.lineTo(Math.cos(a) * 14, Math.sin(a) * 14);
+      ctx.lineTo(Math.cos(a + 0.3) * 6, Math.sin(a + 0.3) * 6);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // Draw Scorpion's Harpoon Spear
+  static drawSpear(ctx: CanvasRenderingContext2D, proj: Projectile, playerX: number, playerY: number) {
+    ctx.save();
+
+    // Draw chain linking player hand to spear tip
+    ctx.strokeStyle = '#c68400';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(playerX + 16, playerY + 20);
+    ctx.lineTo(proj.x + proj.width / 2, proj.y + proj.height / 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.translate(proj.x + proj.width / 2, proj.y + proj.height / 2);
+    if (proj.facing === 'left') {
+      ctx.scale(-1, 1);
+    }
+
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#ff5500';
+
+    // Kunai spearhead
+    ctx.fillStyle = '#e2e8f0';
+    ctx.beginPath();
+    ctx.moveTo(14, 0);
+    ctx.lineTo(-6, -7);
+    ctx.lineTo(-2, 0);
+    ctx.lineTo(-6, 7);
+    ctx.closePath();
+    ctx.fill();
+
+    // Glowing core
+    ctx.fillStyle = '#ff7700';
+    ctx.fillRect(-2, -3, 6, 6);
+
+    ctx.restore();
+  }
+
+  // Draw Bowser's Fireball
+  static drawBowserFire(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    ctx.translate(proj.x + proj.width / 2, proj.y + proj.height / 2);
+    if (proj.facing === 'left') {
+      ctx.scale(-1, 1);
+    }
+
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = '#ff2200';
+
+    // Multi-layer flame
+    const time = Date.now() / 80;
+    const wobble = Math.sin(time) * 3;
+
+    // Outer flame
+    ctx.fillStyle = '#ff2200';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 16 + wobble, 11, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Mid flame
+    ctx.fillStyle = '#ff9900';
+    ctx.beginPath();
+    ctx.ellipse(3, 0, 11, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Core white flame
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.ellipse(6, 0, 6, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // Draw Raiden's Lightning Bolt
+  static drawLightning(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    ctx.translate(proj.x + proj.width / 2, proj.y + proj.height / 2);
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = '#38bdf8';
+
+    const dir = proj.facing === 'left' ? -1 : 1;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-16 * dir, 0);
+    ctx.lineTo(-6 * dir, -8);
+    ctx.lineTo(2 * dir, 6);
+    ctx.lineTo(16 * dir, 0);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Electric plasma orb at tip
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(14 * dir, 0, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // Draw Reptile's Acid Spit
+  static drawAcid(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    ctx.translate(proj.x + proj.width / 2, proj.y + proj.height / 2);
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = '#22c55e';
+
+    const bubble = Math.sin(Date.now() / 80) * 2.5;
+
+    // Glowing Toxic Slime
+    ctx.fillStyle = '#22c55e';
+    ctx.beginPath();
+    ctx.arc(0, 0, 9 + bubble, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#86efac';
+    ctx.beginPath();
+    ctx.arc(2, -2, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Acid droplets
+    const dir = proj.facing === 'left' ? 1 : -1;
+    ctx.fillStyle = '#15803d';
+    ctx.fillRect(dir * 10, -2, 4, 4);
+    ctx.fillRect(dir * 16, 2, 3, 3);
+
+    ctx.restore();
+  }
+
+  // Draw Baraka's spinning Blade Spark
   // Draw Baraka's spinning Blade Spark
   static drawBlade(ctx: CanvasRenderingContext2D, proj: Projectile) {
     ctx.save();
