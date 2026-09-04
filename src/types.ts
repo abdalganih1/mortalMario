@@ -35,6 +35,7 @@ export interface Player {
   isBlocking: boolean;
   isCrouching: boolean;
   crouchUppercut: boolean;
+  flowerShield?: number;
   lives: number;
   score: number;
   coins: number;
@@ -67,6 +68,10 @@ export interface Enemy {
   dizzyTimer?: number;
   meleeCooldown?: number;
   enemyBlockTimer?: number;
+  strikeTimer?: number;
+  inShell?: boolean;
+  shellVx?: number;
+  shellTimer?: number;
   x: number;
   y: number;
   vx: number;

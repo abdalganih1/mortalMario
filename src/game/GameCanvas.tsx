@@ -120,6 +120,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     block: false,
   });
 
+  // Live mirrors for keyboard shortcuts (avoid stale closures)
+  const gameStateRef = useRef<GameState>(gameState);
+  gameStateRef.current = gameState;
+  const levelIdxRef = useRef<number>(0);
+
   // Double-tap timing tracking refs (for Jump -> Up Shift, Left/Right -> Dash, Punch -> Close Special)
   const lastLeftTapRef = useRef<number>(0);
   const lastRightTapRef = useRef<number>(0);
@@ -134,6 +139,28 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   useEffect(() => {
     playerRef.current.character = character;
   }, [character]);
+
+  // Mushroom growth: BIG fighter (Mario-style) — feet stay planted
+  const growPlayer = () => {
+    const p = playerRef.current;
+    if (p.height < 62) {
+      const dh = 62 - p.height;
+      p.height = 62;
+      p.width = 34;
+      p.y -= dh;
+    }
+  };
+
+  // Shrink back to small
+  const shrinkPlayer = () => {
+    const p = playerRef.current;
+    if (p.height > 48) {
+      const dh = p.height - 48;
+      p.height = 48;
+      p.width = 28;
+      p.y += dh;
+    }
+  };
 
   // Load a level
   const loadLevel = useCallback((levelIdx: number) => {
@@ -194,6 +221,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     cameraRef.current = { x: 0, y: 0 };
     setTimeRemaining(400);
     setCurrentLevelIndex(levelIdx);
+    levelIdxRef.current = levelIdx;
+
+    // Spawn protection: 2s shield so bosses can't spawn-kill you
+    playerRef.current.isInvincible = true;
+    playerRef.current.invincibleTimer = Math.max(playerRef.current.invincibleTimer, 2.0);
 
     const boss = enemiesRef.current.find(e => e.type === 'bowser' || e.type === 'rival_ninja' || e.type === 'fighter_boss' || (e.type === 'kombatant' && e.isBoss));
     setBossEnemyState(boss || null);
@@ -213,6 +245,26 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       }
 
       const now = performance.now();
+
+      // ENTER: desktop shortcut — stage_clear -> next stage, game_over -> retry SAME stage
+      if (e.code === 'Enter' || e.code === 'NumpadEnter') {
+        if (gameStateRef.current === 'stage_clear') {
+          const nxt = levelIdxRef.current + 1;
+          if (nxt < LEVEL_DEFINITIONS.length) {
+            loadLevel(nxt);
+            setGameState('playing');
+          } else {
+            setGameState('victory');
+          }
+        } else if (gameStateRef.current === 'game_over') {
+          playerRef.current.lives = 3;
+          playerRef.current.blood = playerRef.current.maxBlood;
+          playerRef.current.health = 3;
+          loadLevel(levelIdxRef.current);
+          setGameState('playing');
+        }
+        return;
+      }
 
       // LEFT (Single press moves left, double-tap dashes left)
       if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
@@ -509,6 +561,32 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       let hitAny = false;
       enemiesRef.current.forEach(e => {
         if (!e.isAlive) return;
+        // Stationary shells get KICKED by punches (never punched through)
+        if (e.type === 'koopa' && e.inShell && !e.shellVx) {
+          if (
+            attackX < e.x + e.width &&
+            attackX + attackRange > e.x &&
+            attackY < e.y + e.height &&
+            attackY + (isUppercut ? 50 : 30) > e.y
+          ) {
+            e.shellVx = p.facing === 'right' ? 6.5 : -6.5;
+            e.shellTimer = 6;
+            hitAny = true;
+            p.score += 100;
+            soundManager.playPunch();
+            floatingTextsRef.current.push({
+              id: Math.random(),
+              text: 'SHELL KICK! 🐢💨 +100',
+              x: e.x + e.width / 2,
+              y: e.y - 12,
+              vy: -1.4,
+              color: '#bbf7d0',
+              alpha: 1,
+              scale: 1.1,
+            });
+          }
+          return;
+        }
         if (
           attackX < e.x + e.width &&
           attackX + attackRange > e.x &&
@@ -1145,6 +1223,31 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Damage Enemy Logic
   const applyDamageToEnemy = (enemy: Enemy, dmg: number, source: string) => {
+    // KOOPA SHELL RULES (classic Mario):
+    if (enemy.type === 'koopa' && enemy.isAlive) {
+      if (enemy.inShell && enemy.shellVx && (source === 'dash_tackle' || source === 'slide' || source === 'uppercut' || source === 'blades')) {
+        dmg = 99; // smash the racing shell apart!
+      } else if (!enemy.inShell && (source === 'stomp' || source === 'punch' || source === 'uppercut' || source === 'dash_tackle' || source === 'slide')) {
+        // FIRST hit: the turtle hides inside its shell — now SAFE to touch!
+        enemy.inShell = true;
+        enemy.shellVx = 0;
+        enemy.shellTimer = 7;
+        enemy.vx = 0;
+        playerRef.current.score += 100;
+        soundManager.playPunch();
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'SHELL UP! 🐢 +100',
+          x: enemy.x + enemy.width / 2,
+          y: enemy.y - 10,
+          vy: -1.4,
+          color: '#bbf7d0',
+          alpha: 1,
+          scale: 1.1,
+        });
+        return;
+      }
+    }
     // Kombatant guard: MK fighters sometimes BLOCK melee/projectile hits
     if (
       (enemy.type === 'kombatant' || enemy.type === 'fighter_boss' || enemy.type === 'rival_ninja') &&
@@ -1259,28 +1362,54 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       return;
     }
 
-    // Fire flower armor absorbs one full hit
+    // Fire flower shield: every petal absorbs one FULL hit — a real guard
     if (p.powerUp === 'flower') {
-      p.powerUp = 'mushroom';
+      p.flowerShield = Math.max(0, (p.flowerShield ?? 3) - 1);
       p.isInvincible = true;
       p.invincibleTimer = 1.0;
       soundManager.playBlock();
-      floatingTextsRef.current.push({
-        id: Math.random(),
-        text: 'ARMOR ABSORBED! 🔥',
-        x: p.x + p.width / 2,
-        y: p.y - 12,
-        vy: -1.4,
-        color: '#fdba74',
-        alpha: 1,
-        scale: 1.1,
-      });
+      screenShakeRef.current = Math.max(screenShakeRef.current, 3);
+      if ((p.flowerShield ?? 0) <= 0) {
+        p.powerUp = 'mushroom';
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'SHIELD BROKEN! 🌸💔',
+          x: p.x + p.width / 2,
+          y: p.y - 12,
+          vy: -1.4,
+          color: '#f9a8d4',
+          alpha: 1,
+          scale: 1.2,
+        });
+      } else {
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: `FLOWER SHIELD x${p.flowerShield}! 🌸🛡️`,
+          x: p.x + p.width / 2,
+          y: p.y - 12,
+          vy: -1.4,
+          color: '#fdba74',
+          alpha: 1,
+          scale: 1.1,
+        });
+      }
       return;
     } else if (p.powerUp === 'mushroom') {
       p.powerUp = 'none';
+      shrinkPlayer();
       p.isInvincible = true;
       p.invincibleTimer = 1.0;
       soundManager.playPunch();
+      floatingTextsRef.current.push({
+        id: Math.random(),
+        text: 'SHRUNK! 🍄',
+        x: p.x + p.width / 2,
+        y: p.y - 12,
+        vy: -1.4,
+        color: '#fca5a5',
+        alpha: 1,
+        scale: 1.0,
+      });
       return;
     }
 
@@ -1327,6 +1456,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       p.health = 3;
       p.blood = p.maxBlood;
       p.powerUp = 'none';
+      p.flowerShield = 0;
+      p.width = 28;
+      p.height = 48;
       p.isBlocking = false;
       p.isCrouching = false;
       loadLevel(currentLevelIndex);
@@ -1607,8 +1739,40 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             // Spawn Item safely without any freeze!
             spawnBlockItem(block);
           } else if (block.type === 'brick') {
-            block.bounceOffset = -5;
-            soundManager.playBlockHit();
+            // BIG fighters smash bricks with their heads!
+            if (p.powerUp !== 'none') {
+              block.isDestroyed = true;
+              p.score += 50;
+              soundManager.playBlockHit();
+              screenShakeRef.current = Math.max(screenShakeRef.current, 4);
+              for (let i = 0; i < 10; i++) {
+                particlesRef.current.push({
+                  id: Math.random(),
+                  x: block.x + block.width / 2,
+                  y: block.y + block.height / 2,
+                  vx: (Math.random() - 0.5) * 6,
+                  vy: -Math.random() * 5 - 1,
+                  color: Math.random() > 0.5 ? '#c84c0c' : '#782604',
+                  size: Math.random() * 5 + 3,
+                  alpha: 1,
+                  decay: 0.04,
+                  shape: 'square',
+                });
+              }
+              floatingTextsRef.current.push({
+                id: Math.random(),
+                text: 'BRICK SMASH! +50 🧱',
+                x: block.x + block.width / 2,
+                y: block.y - 10,
+                vy: -1.4,
+                color: '#fdba74',
+                alpha: 1,
+                scale: 1.1,
+              });
+            } else {
+              block.bounceOffset = -5;
+              soundManager.playBlockHit();
+            }
           }
         }
       }
@@ -1641,16 +1805,62 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         item.y -= 1.2;
         if (item.y <= item.emergeY - 32) {
           item.emerging = false;
+          // Mushrooms march out of the box, flowers stay to be grabbed
+          if (item.type === 'mushroom' && !item.vx) item.vx = 1.5;
         }
         return;
       }
 
-      // Collect item check
+      // Item world physics: powerups fall, land on ground/blocks — always reachable!
+      if (item.type === 'mushroom' || item.type === 'flower') {
+        item.vy = (item.vy || 0) + 0.45;
+        if (item.vy > 9) item.vy = 9;
+        item.y += item.vy;
+        if (item.type === 'mushroom') {
+          if (!item.vx) item.vx = 1.5;
+          item.x += item.vx;
+          // Bounce off walls
+          blocksRef.current.forEach(block => {
+            if (block.isDestroyed || block.type === 'lava') return;
+            if (
+              item.x < block.x + block.width &&
+              item.x + item.width > block.x &&
+              item.y < block.y + block.height &&
+              item.y + item.height > block.y
+            ) {
+              if ((item.vx || 0) > 0) item.x = block.x - item.width;
+              else if ((item.vx || 0) < 0) item.x = block.x + block.width;
+              item.vx = -((item.vx || 1.5));
+            }
+          });
+        }
+        // Land on solid ground
+        blocksRef.current.forEach(block => {
+          if (block.isDestroyed || block.type === 'lava') return;
+          if (
+            (item.vy || 0) >= 0 &&
+            item.x + item.width > block.x + 2 &&
+            item.x < block.x + block.width - 2 &&
+            item.y + item.height > block.y &&
+            item.y + item.height - (item.vy || 0) <= block.y + 10
+          ) {
+            item.y = block.y - item.height;
+            item.vy = 0;
+          }
+        });
+        // Lost to the pit
+        if (item.y > levelDef.height + 80) {
+          item.collected = true;
+          return;
+        }
+      }
+
+      // Collect item check (generous pickup radius)
       if (
-        p.x < item.x + item.width &&
-        p.x + p.width > item.x &&
-        p.y < item.y + item.height &&
-        p.y + p.height > item.y
+        p.x < item.x + item.width + 6 &&
+        p.x + p.width + 6 > item.x &&
+        p.y < item.y + item.height + 6 &&
+        p.y + p.height + 6 > item.y
       ) {
         item.collected = true;
         if (item.type === 'coin') {
@@ -1658,27 +1868,45 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           p.score += 200;
           soundManager.playCoin();
         } else if (item.type === 'mushroom') {
-          p.powerUp = 'mushroom';
-          p.score += 1000;
+          // Mushroom NEVER downgrades a flower — flower keeps its petals!
+          if (p.powerUp === 'none') {
+            p.powerUp = 'mushroom';
+            growPlayer();
+            p.score += 1000;
+            floatingTextsRef.current.push({
+              id: Math.random(),
+              text: 'SUPER MUSHROOM! BIG! 🍄',
+              x: item.x,
+              y: item.y - 10,
+              vy: -1.2,
+              color: '#22c55e',
+              alpha: 1,
+              scale: 1.2,
+            });
+          } else {
+            p.score += 1000;
+            floatingTextsRef.current.push({
+              id: Math.random(),
+              text: 'POWER BONUS! +1000',
+              x: item.x,
+              y: item.y - 10,
+              vy: -1.2,
+              color: '#facc15',
+              alpha: 1,
+              scale: 1.1,
+            });
+          }
           soundManager.playPowerup();
-          floatingTextsRef.current.push({
-            id: Math.random(),
-            text: 'SUPER MUSHROOM!',
-            x: item.x,
-            y: item.y - 10,
-            vy: -1.2,
-            color: '#22c55e',
-            alpha: 1,
-            scale: 1.2,
-          });
         } else if (item.type === 'flower') {
-          // FIRE FLOWER - FIXED WITH ZERO FREEZE!
+          // FIRE FLOWER: always upgrades + full 3-petal shield, stays BIG
           p.powerUp = 'flower';
+          growPlayer();
+          p.flowerShield = 3;
           p.score += 2000;
           soundManager.playPowerup();
           floatingTextsRef.current.push({
             id: Math.random(),
-            text: 'ELEMENTAL FIRE SURGE!',
+            text: 'FIRE FLOWER! SHIELD x3! 🌸',
             x: item.x,
             y: item.y - 10,
             vy: -1.2,
@@ -1751,7 +1979,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           }
         });
       } else if (proj.owner === 'enemy') {
-        // Enemy projectiles (Bowser Fire) hit player
+        // Enemy projectiles hit player (lighter than melee — blockable chip)
         if (
           proj.x < p.x + p.width &&
           proj.x + proj.width > p.x &&
@@ -1759,7 +1987,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           proj.y + proj.height > p.y
         ) {
           proj.active = false;
-          handlePlayerHurt();
+          handlePlayerHurt(8);
         }
       }
     });
@@ -1968,25 +2196,33 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         if (enemy.meleeCooldown && enemy.meleeCooldown > 0) enemy.meleeCooldown -= dt;
         if ((enemy.attackTimer || 0) > 0) enemy.attackTimer -= dt;
 
-        if (Math.abs(dx) > meleeReach) {
+        if (Math.abs(dx) > meleeReach && !(enemy.strikeTimer && enemy.strikeTimer > 0)) {
           enemy.x += dx > 0 ? stalkSpeed : -stalkSpeed;
-        } else if ((enemy.meleeCooldown || 0) <= 0) {
-          // MELEE STRIKE!
-          enemy.meleeCooldown = enraged ? 0.9 : 1.4;
-          enemy.attackTimer = 0.4;
+        } else if ((enemy.meleeCooldown || 0) <= 0 && !(enemy.strikeTimer && enemy.strikeTimer > 0)) {
+          // MELEE WIND-UP (telegraphed 0.35s — dodge it or hold BLOCK!)
+          enemy.strikeTimer = 0.35;
+          enemy.attackTimer = 0.45;
           soundManager.playPunch();
-          if (Math.abs(p.x - enemy.x) < meleeReach + 24 && Math.abs(p.y - enemy.y) < 52) {
-            handlePlayerHurt(isFBoss ? 16 : 12);
-            floatingTextsRef.current.push({
-              id: Math.random(),
-              text: isFBoss ? 'BOSS STRIKE! 👊' : 'FIGHTER HIT! 👊',
-              x: p.x + p.width / 2,
-              y: p.y - 12,
-              vy: -1.4,
-              color: '#fca5a5',
-              alpha: 1,
-              scale: 1.1,
-            });
+        }
+
+        // Wind-up resolves into the real strike
+        if (enemy.strikeTimer && enemy.strikeTimer > 0) {
+          enemy.strikeTimer -= dt;
+          if (enemy.strikeTimer <= 0) {
+            enemy.meleeCooldown = enraged ? 1.2 : 1.8;
+            if (Math.abs(p.x - enemy.x) < meleeReach + 26 && Math.abs(p.y - enemy.y) < 54) {
+              handlePlayerHurt(isFBoss ? 13 : 10);
+              floatingTextsRef.current.push({
+                id: Math.random(),
+                text: isFBoss ? 'BOSS STRIKE! 👊' : 'FIGHTER HIT! 👊',
+                x: p.x + p.width / 2,
+                y: p.y - 12,
+                vy: -1.4,
+                color: '#fca5a5',
+                alpha: 1,
+                scale: 1.1,
+              });
+            }
           }
         }
 
@@ -2031,10 +2267,113 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         }
 
         if (isFBoss) setBossEnemyState({ ...enemy });
+
+        // Fighter gravity + SOLID body: never sinks, never enters walls!
+        enemy.vy = (enemy.vy || 0) + 0.5;
+        if (enemy.vy > 10) enemy.vy = 10;
+        enemy.y += enemy.vy;
+        blocksRef.current.forEach(block => {
+          if (block.isDestroyed || block.type === 'lava' || block.type === 'bridge' || block.type === 'axe') return;
+          // Land on top
+          if (
+            (enemy.vy || 0) >= 0 &&
+            enemy.x + enemy.width > block.x + 2 &&
+            enemy.x < block.x + block.width - 2 &&
+            enemy.y + enemy.height > block.y &&
+            enemy.y + enemy.height - (enemy.vy || 0) <= block.y + 10
+          ) {
+            enemy.y = block.y - enemy.height;
+            enemy.vy = 0;
+          }
+          // Walls stop fighters cold
+          if (
+            enemy.x < block.x + block.width &&
+            enemy.x + enemy.width > block.x &&
+            enemy.y < block.y + block.height &&
+            enemy.y + enemy.height > block.y + 6
+          ) {
+            if (enemy.x + enemy.width / 2 < block.x + block.width / 2) enemy.x = block.x - enemy.width;
+            else enemy.x = block.x + block.width;
+          }
+        });
+        if (enemy.x < 0) enemy.x = 0;
+        if (enemy.x > levelDef.width - enemy.width) enemy.x = levelDef.width - enemy.width;
+        if (enemy.y > levelDef.height + 80) {
+          enemy.y = levelDef.height - enemy.height - 40;
+          enemy.vy = 0;
+        }
       } else if (enemy.type === 'piranha') {
         // Piranha snaps up and down from pipe
         enemy.animationTimer += dt * 2;
         enemy.y = enemy.y + Math.sin(enemy.animationTimer) * 0.6;
+      } else if (enemy.type === 'koopa' && enemy.inShell) {
+        // --- KOOPA SHELL STATE: parked (wake timer) or racing (mows enemies!) ---
+        if (enemy.shellTimer && enemy.shellTimer > 0) {
+          enemy.shellTimer -= dt;
+          if (enemy.shellTimer <= 0 && !enemy.shellVx) {
+            // Wakes back up into a turtle!
+            enemy.inShell = false;
+            enemy.health = 2;
+            enemy.vx = enemy.facing === 'right' ? 1.2 : -1.2;
+            soundManager.playPunch();
+            floatingTextsRef.current.push({
+              id: Math.random(),
+              text: 'WAKE UP! 🐢',
+              x: enemy.x + enemy.width / 2,
+              y: enemy.y - 10,
+              vy: -1.2,
+              color: '#fca5a5',
+              alpha: 1,
+              scale: 1.0,
+            });
+          }
+        }
+        if (enemy.shellVx) {
+          // Racing shell physics
+          enemy.vy = (enemy.vy || 0) + 0.5;
+          if (enemy.vy > 10) enemy.vy = 10;
+          enemy.x += enemy.shellVx;
+          enemy.y += enemy.vy;
+          blocksRef.current.forEach(block => {
+            if (block.isDestroyed || block.type === 'lava' || block.type === 'bridge' || block.type === 'axe') return;
+            // Bounce off walls
+            if (
+              enemy.x < block.x + block.width &&
+              enemy.x + enemy.width > block.x &&
+              enemy.y < block.y + block.height &&
+              enemy.y + enemy.height > block.y + 4
+            ) {
+              enemy.shellVx = -(enemy.shellVx || 6);
+              if (enemy.x + enemy.width / 2 < block.x + block.width / 2) enemy.x = block.x - enemy.width;
+              else enemy.x = block.x + block.width;
+              soundManager.playBlockHit();
+            }
+            // Land on ground
+            if (
+              (enemy.vy || 0) >= 0 &&
+              enemy.x + enemy.width > block.x + 2 &&
+              enemy.x < block.x + block.width - 2 &&
+              enemy.y + enemy.height > block.y &&
+              enemy.y + enemy.height - (enemy.vy || 0) <= block.y + 10
+            ) {
+              enemy.y = block.y - enemy.height;
+              enemy.vy = 0;
+            }
+          });
+          // Mow down EVERY enemy in the shell's path!
+          enemiesRef.current.forEach(other => {
+            if (other === enemy || !other.isAlive) return;
+            if (
+              enemy.x < other.x + other.width &&
+              enemy.x + enemy.width > other.x &&
+              enemy.y < other.y + other.height &&
+              enemy.y + enemy.height > other.y
+            ) {
+              applyDamageToEnemy(other, 99, 'shell');
+            }
+          });
+          if (enemy.y > levelDef.height + 60) enemy.isAlive = false;
+        }
       } else {
         // Goomba / Koopa walking
         enemy.x += enemy.vx;
@@ -2060,7 +2399,53 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         p.y < enemy.y + enemy.height &&
         p.y + p.height > enemy.y
       ) {
-        if (p.isDashing || p.isSliding) {
+        // KOOPA SHELL contact rules — shells are toys, not threats!
+        if (enemy.type === 'koopa' && enemy.inShell) {
+          if (enemy.shellVx) {
+            // Racing shell!
+            if (p.isDashing || p.isSliding) {
+              applyDamageToEnemy(enemy, 99, 'shell_smash');
+              p.score += 400;
+            } else if (p.vy > 0 && p.y + p.height - p.vy <= enemy.y + 14) {
+              // Stomp stops the racing shell cold
+              enemy.shellVx = 0;
+              enemy.shellTimer = 6;
+              p.vy = -8.5;
+              p.score += 200;
+              soundManager.playPunch();
+              floatingTextsRef.current.push({
+                id: Math.random(),
+                text: 'SHELL STOP! +200 🛑',
+                x: enemy.x + enemy.width / 2,
+                y: enemy.y - 12,
+                vy: -1.4,
+                color: '#bbf7d0',
+                alpha: 1,
+                scale: 1.1,
+              });
+            } else {
+              handlePlayerHurt(10);
+            }
+          } else {
+            // Parked shell: touch it from ANY side to kick it flying (totally safe!)
+            const kickDir = p.x + p.width / 2 < enemy.x + enemy.width / 2 ? 1 : -1;
+            enemy.shellVx = kickDir * 6.5;
+            enemy.shellTimer = 6;
+            if (p.vy > 0 && p.y + p.height - p.vy <= enemy.y + 16) p.vy = -8.5;
+            p.score += 100;
+            soundManager.playPunch();
+            floatingTextsRef.current.push({
+              id: Math.random(),
+              text: 'SHELL KICK! 🐢💨 +100',
+              x: enemy.x + enemy.width / 2,
+              y: enemy.y - 12,
+              vy: -1.4,
+              color: '#bbf7d0',
+              alpha: 1,
+              scale: 1.1,
+            });
+          }
+        } else if (p.isDashing || p.isSliding) {
           // Dashing or sliding into enemy damages them safely!
           applyDamageToEnemy(enemy, 1, p.isSliding ? 'slide' : 'dash_tackle');
         } else if (p.vy > 0 && p.y + p.height - p.vy <= enemy.y + 12 && enemy.type !== 'bowser' && enemy.type !== 'kombatant' && enemy.type !== 'fighter_boss' && enemy.type !== 'rival_ninja') {
@@ -2091,6 +2476,21 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     floatingTextsRef.current = floatingTextsRef.current.filter(ft => ft.alpha > 0);
 
     // --- CAMERA TRACKING ---
+    // Ground recharge: touching earth refreshes DASH + UP-SHIFT instantly (no timer lock!)
+    if (p.isGrounded) {
+      if (!p.hasAirShift) {
+        p.hasAirShift = true;
+        setHasAirShiftState(true);
+      }
+      if (p.dashCooldown > 0) {
+        p.dashCooldown = 0;
+        setDashCd(0);
+      }
+      if ((p.upShiftCooldown || 0) > 0) {
+        p.upShiftCooldown = 0;
+        setUpShiftCd(0);
+      }
+    }
     // Smooth camera horizontal tracking
     const targetCamX = p.x - 300;
     cameraRef.current.x += (targetCamX - cameraRef.current.x) * 0.12;
@@ -2724,6 +3124,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           <p className="text-sm text-neutral-300 mt-2 max-w-sm">
             أحسنت! تم تحرير هذه المنطقة بنجاح بواسطة {playerRef.current.character.toUpperCase()}.
           </p>
+          <p className="text-xs text-neutral-500 mt-1 font-mono">اضغط Enter ⏎ للانتقال للعالم التالي</p>
           <div className="mt-6 flex gap-3">
             <button
               onClick={handleNextLevel}
@@ -2749,7 +3150,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             onClick={() => {
               playerRef.current.lives = 3;
               playerRef.current.score = 0;
-              loadLevel(0);
+              playerRef.current.blood = playerRef.current.maxBlood;
+              playerRef.current.health = 3;
+              loadLevel(currentLevelIndex);
               setGameState('playing');
             }}
             className="mt-6 px-6 py-3 rounded-xl bg-red-700 hover:bg-red-600 text-white font-black text-sm uppercase tracking-wider shadow-xl active:scale-95 transition-all"

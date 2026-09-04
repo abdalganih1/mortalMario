@@ -8,6 +8,9 @@ export class SpriteRenderer {
     if (player.facing === 'left') {
       ctx.scale(-1, 1);
     }
+    // BIG mushroom size: scale the whole rig (feet stay planted)
+    const sizeK = (player.height || 48) / 48;
+    ctx.scale(sizeK, sizeK);
 
     // Invincibility flicker
     if (player.isInvincible && Math.floor(player.invincibleTimer * 10) % 2 === 0) {
@@ -937,8 +940,37 @@ export class SpriteRenderer {
       ctx.fillRect(3, topY + 5, 7, 2);
 
     } else if (type === 'koopa') {
-      // --- KOOPA TROOPA ---
+      // --- KOOPA TROOPA (or hiding shell!) ---
       const walk = Math.sin(Date.now() / 150) * 3;
+
+      if (enemy.inShell) {
+        // Hiding shell: white-rimmed dome, eyes peeking (SAFE to touch!)
+        const shk = enemy.shellVx ? Math.sin(Date.now() / 60) * 1.5 : 0;
+        ctx.fillStyle = isFrozen ? '#00b4d8' : '#16a34a';
+        ctx.beginPath();
+        ctx.arc(shk, topY + 20, 13, Math.PI, 0);
+        ctx.fill();
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = isFrozen ? '#90e0ef' : '#bbf7d0';
+        ctx.fillRect(-13 + shk, topY + 20, 26, 4);
+        // Peeking eyes
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(-5 + shk, topY + 14, 3, 3);
+        ctx.fillRect(2 + shk, topY + 14, 3, 3);
+        if (enemy.shellVx) {
+          // Speed lines on a racing shell
+          ctx.strokeStyle = '#fef08a';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(-20, topY + 16);
+          ctx.lineTo(-30, topY + 16);
+          ctx.moveTo(-20, topY + 24);
+          ctx.lineTo(-30, topY + 24);
+          ctx.stroke();
+        }
+      } else {
 
       // Green Spiked Shell
       ctx.fillStyle = isFrozen ? '#00b4d8' : '#16a34a';
@@ -964,6 +996,7 @@ export class SpriteRenderer {
       ctx.fillStyle = isFrozen ? '#0077b6' : '#ea580c';
       ctx.fillRect(-10 + walk, topY + 30, 8, 6);
       ctx.fillRect(2 - walk, topY + 30, 8, 6);
+      }
 
     } else if (type === 'piranha') {
       // --- PIRANHA PLANT ---

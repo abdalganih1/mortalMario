@@ -65,6 +65,8 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               </div>
               <span className="text-[10px] text-neutral-300 ml-1">x{player.lives}</span>
               {player.isBlocking && <span className="text-[10px] text-blue-300 font-black">🛡️ دفاع</span>}
+              {player.powerUp === 'flower' && <span className="text-[10px] text-pink-300 font-black">🌸x{player.flowerShield ?? 3}</span>}
+              {player.powerUp !== 'none' && <span className="text-[10px] text-emerald-300 font-black">⬆️ كبير</span>}
             </div>
           </div>
         </div>
