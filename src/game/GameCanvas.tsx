@@ -60,6 +60,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     character,
     health: 3,
     maxHealth: 3,
+    blood: 100,
+    maxBlood: 100,
+    isBlocking: false,
+    isCrouching: false,
+    crouchUppercut: false,
     lives: 3,
     score: 0,
     coins: 0,
@@ -98,6 +103,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     right: boolean;
     jump: boolean;
     dash: boolean;
+    down: boolean;
+    block: boolean;
     attack: boolean;
     special1: boolean;
     special2: boolean;
@@ -109,6 +116,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     attack: false,
     special1: false,
     special2: false,
+    down: false,
+    block: false,
   });
 
   // Double-tap timing tracking refs (for Jump -> Up Shift, Left/Right -> Dash, Punch -> Close Special)
@@ -139,6 +148,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       noob: 'subzero',
       raiden: 'noob',
       reptile: 'raiden',
+      baraka: 'liukang',
+      liukang: 'shangtsung',
+      kitana: 'baraka',
+      shangtsung: 'liukang',
     };
     const assignedRival = rivalMap[playerChar] || 'scorpion';
 
@@ -150,7 +163,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       freezeTimer: 0,
       animationTimer: 0,
       attackTimer: 0,
-      rivalFighter: e.type === 'rival_ninja' ? assignedRival : undefined,
+      fighterKind: e.type === 'rival_ninja' || e.type === 'kombatant' || e.type === 'fighter_boss' ? (e.fighterKind || assignedRival) : e.fighterKind,
     }));
     itemsRef.current = [];
     projectilesRef.current = [];
@@ -164,6 +177,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     playerRef.current.vy = 0;
     playerRef.current.isGrounded = false;
     playerRef.current.isDashing = false;
+    playerRef.current.blood = playerRef.current.maxBlood;
+    playerRef.current.health = 3;
+    playerRef.current.isBlocking = false;
+    playerRef.current.isCrouching = false;
+    playerRef.current.crouchUppercut = false;
     playerRef.current.upShiftCooldown = 0;
     playerRef.current.hasAirShift = true;
     playerRef.current.isSliding = false;
@@ -177,7 +195,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     setTimeRemaining(400);
     setCurrentLevelIndex(levelIdx);
 
-    const boss = enemiesRef.current.find(e => e.type === 'bowser' || e.type === 'rival_ninja');
+    const boss = enemiesRef.current.find(e => e.type === 'bowser' || e.type === 'rival_ninja' || e.type === 'fighter_boss' || (e.type === 'kombatant' && e.isBoss));
     setBossEnemyState(boss || null);
   }, []);
 
@@ -190,7 +208,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Prevent default scrolling on game keys
-      if (['ArrowUp', 'ArrowLeft', 'ArrowRight', 'Space', 'Shift', 'KeyW', 'KeyA', 'KeyD'].includes(e.code)) {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Shift', 'KeyW', 'KeyA', 'KeyD', 'KeyS'].includes(e.code)) {
         e.preventDefault();
       }
 
@@ -235,13 +253,22 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         }
       }
 
-      // SHIFT KEY / E KEY (Direct hotkeys for quick Dash & Up Shift)
-      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyS') {
+      // SHIFT KEY (Direct hotkey for quick Dash)
+      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
         if (keysRef.current.jump || !playerRef.current.isGrounded) {
           triggerDash('up');
         } else {
           triggerDash('forward');
         }
+      }
+      // DOWN / CROUCH + PIPE ENTER (ArrowDown or S)
+      if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+        keysRef.current.down = true;
+        tryPipeWarp();
+      }
+      // BLOCK / DEFEND (hold F)
+      if (e.code === 'KeyF') {
+        keysRef.current.block = true;
       }
       if (e.code === 'KeyE') {
         triggerDash('up');
@@ -279,6 +306,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       if (e.code === 'ArrowLeft' || e.code === 'KeyA') keysRef.current.left = false;
       if (e.code === 'ArrowRight' || e.code === 'KeyD') keysRef.current.right = false;
       if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space') keysRef.current.jump = false;
+      if (e.code === 'ArrowDown' || e.code === 'KeyS') keysRef.current.down = false;
+      if (e.code === 'KeyF') keysRef.current.block = false;
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -458,8 +487,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       if (p.isAttacking) return;
       p.isAttacking = true;
 
-      // Check if Uppercut triggered (holding Jump/Up or in mid-air)
-      const isUppercut = keysRef.current.jump || !p.isGrounded;
+      // CLASSIC MK UPPERCUT: crouch + punch = the famous rising fist! (also jump-held or airborne)
+      const isCrouchHit = keysRef.current.down && p.isGrounded;
+      const isUppercut = keysRef.current.jump || !p.isGrounded || isCrouchHit;
+      p.crouchUppercut = isCrouchHit;
       p.attackTimer = isUppercut ? 0.35 : 0.25;
       p.attackType = isUppercut ? 'uppercut' : 'punch';
 
@@ -485,13 +516,18 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           attackY + (isUppercut ? 50 : 30) > e.y
         ) {
           hitAny = true;
-          const damage = isUppercut ? 2 : 1;
+          const damage = p.crouchUppercut ? 3 : isUppercut ? 2 : 1;
           applyDamageToEnemy(e, damage, isUppercut ? 'uppercut' : 'punch');
 
           if (isUppercut && e.isAlive) {
             // Launch enemy high into air with classic Mortal Kombat uppercut arc!
-            e.vy = -8.5;
+            // (crouch uppercut launches even higher — the famous MK juggle starter)
+            e.vy = p.crouchUppercut ? -10.5 : -8.5;
             e.vx = p.facing === 'right' ? 3.5 : -3.5;
+            if (e.type === 'kombatant' || e.type === 'fighter_boss' || e.type === 'rival_ninja') {
+              e.isDizzy = true;
+              e.dizzyTimer = 1.6;
+            }
           }
         }
       });
@@ -499,7 +535,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       if (isUppercut) {
         floatingTextsRef.current.push({
           id: Math.random(),
-          text: 'UPPERCUT! 💥',
+          text: p.crouchUppercut ? 'CROUCH UPPERCUT! 💥👊' : 'UPPERCUT! 💥',
           x: p.x + p.width / 2,
           y: p.y - 16,
           vy: -1.6,
@@ -523,7 +559,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         }
       }
     } else if (type === 'special1') {
-      // SPECIAL 1: Subzero (Ice Blast) / Scorpion (Spear) / Noob (Shadow Rush) / Raiden (Lightning) / Reptile (Acid Spit)
+      // SPECIAL 1 (ranged): Sub-Zero / Scorpion / Noob / Raiden / Reptile / Baraka / Liu Kang / Kitana / Shang Tsung
       if (p.special1Cooldown > 0) return;
       p.special1Cooldown = 1.8;
       p.isAttacking = true;
@@ -661,9 +697,125 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           alpha: 1,
           scale: 1.2,
         });
+      } else if (p.character === 'baraka') {
+        // BARAKA: BLADE SPARK (piercing ranged blades)
+        soundManager.playFanThrow();
+        projectilesRef.current.push({
+          id: Math.random(),
+          type: 'blade_spark',
+          x: p.facing === 'right' ? p.x + p.width + 5 : p.x - 26,
+          y: p.y + 14,
+          vx: p.facing === 'right' ? 7.5 : -7.5,
+          vy: 0,
+          width: 26,
+          height: 18,
+          damage: 26,
+          owner: 'player',
+          duration: 3.0,
+          active: true,
+          facing: p.facing,
+        });
+
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'BLADE SPARK! 🔪',
+          x: p.x + p.width / 2,
+          y: p.y - 12,
+          vy: -1.5,
+          color: '#f43f5e',
+          alpha: 1,
+          scale: 1.2,
+        });
+      } else if (p.character === 'liukang') {
+        // LIU KANG: DRAGON FIREBALL
+        soundManager.playTorpedo();
+        projectilesRef.current.push({
+          id: Math.random(),
+          type: 'dragon_fire',
+          x: p.facing === 'right' ? p.x + p.width + 5 : p.x - 28,
+          y: p.y + 14,
+          vx: p.facing === 'right' ? 7.0 : -7.0,
+          vy: 0,
+          width: 28,
+          height: 22,
+          damage: 28,
+          owner: 'player',
+          duration: 3.2,
+          active: true,
+          facing: p.facing,
+        });
+
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'DRAGON FIRE! 🐉',
+          x: p.x + p.width / 2,
+          y: p.y - 12,
+          vy: -1.5,
+          color: '#f97316',
+          alpha: 1,
+          scale: 1.2,
+        });
+      } else if (p.character === 'kitana') {
+        // KITANA: STEEL FAN THROW
+        soundManager.playFanThrow();
+        projectilesRef.current.push({
+          id: Math.random(),
+          type: 'steel_fan',
+          x: p.facing === 'right' ? p.x + p.width + 5 : p.x - 28,
+          y: p.y + 14,
+          vx: p.facing === 'right' ? 8.0 : -8.0,
+          vy: 0,
+          width: 28,
+          height: 20,
+          damage: 24,
+          owner: 'player',
+          duration: 3.0,
+          active: true,
+          facing: p.facing,
+        });
+
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'FAN THROW! 🪭',
+          x: p.x + p.width / 2,
+          y: p.y - 12,
+          vy: -1.5,
+          color: '#60a5fa',
+          alpha: 1,
+          scale: 1.2,
+        });
+      } else if (p.character === 'shangtsung') {
+        // SHANG TSUNG: SOUL SKULL
+        soundManager.playShadowClone();
+        projectilesRef.current.push({
+          id: Math.random(),
+          type: 'soul_skull',
+          x: p.facing === 'right' ? p.x + p.width + 5 : p.x - 28,
+          y: p.y + 14,
+          vx: p.facing === 'right' ? 6.4 : -6.4,
+          vy: 0,
+          width: 28,
+          height: 26,
+          damage: 30,
+          owner: 'player',
+          duration: 3.5,
+          active: true,
+          facing: p.facing,
+        });
+
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'SOUL SKULL! 💀',
+          x: p.x + p.width / 2,
+          y: p.y - 12,
+          vy: -1.5,
+          color: '#a855f7',
+          alpha: 1,
+          scale: 1.2,
+        });
       }
     } else if (type === 'special2') {
-      // SPECIAL 2: Sub-Zero (Cold Slide) / Scorpion (Hellfire Teleport) / Noob (Dark Vortex) / Raiden (Torpedo) / Reptile (Forceball)
+      // SPECIAL 2 (close): Sub-Zero / Scorpion / Noob / Raiden / Reptile / Baraka / Liu Kang / Kitana / Shang Tsung
       if (p.special2Cooldown > 0) return;
       p.special2Cooldown = 1.8;
       p.isAttacking = true;
@@ -860,12 +1012,162 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           alpha: 1,
           scale: 1.3,
         });
+      } else if (p.character === 'baraka') {
+        // --- BARAKA SHREDDER SPIN: whirling blades, invincible while spinning ---
+        soundManager.playFanThrow();
+        screenShakeRef.current = 8;
+        p.isDashing = true;
+        p.dashTimer = 0.5;
+        p.isInvincible = true;
+        p.invincibleTimer = 0.55;
+        p.vx = p.facing === 'right' ? 8.5 : -8.5;
+
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'SHREDDER SPIN! 🔪',
+          x: p.x,
+          y: p.y - 14,
+          vy: -1.6,
+          color: '#f43f5e',
+          alpha: 1,
+          scale: 1.4,
+        });
+
+        enemiesRef.current.forEach(e => {
+          if (e.isAlive && Math.abs(e.x - p.x) < 85 && Math.abs(e.y - p.y) < 50) {
+            applyDamageToEnemy(e, 3, 'blades');
+          }
+        });
+      } else if (p.character === 'liukang') {
+        // --- LIU KANG BICYCLE KICK: flying multi-hit kick rush ---
+        soundManager.playUppercut();
+        screenShakeRef.current = 8;
+        p.isDashing = true;
+        p.dashTimer = 0.55;
+        p.isInvincible = true;
+        p.invincibleTimer = 0.6;
+        p.vy = -2;
+        p.vx = p.facing === 'right' ? 10.5 : -10.5;
+
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'BICYCLE KICK! 🐉🦵',
+          x: p.x,
+          y: p.y - 14,
+          vy: -1.6,
+          color: '#f97316',
+          alpha: 1,
+          scale: 1.4,
+        });
+
+        enemiesRef.current.forEach(e => {
+          if (e.isAlive && Math.abs(e.x - p.x) < 90 && Math.abs(e.y - p.y) < 55) {
+            applyDamageToEnemy(e, 2, 'projectile');
+            if (e.isAlive) {
+              e.vy = -6;
+              e.vx = p.facing === 'right' ? 4 : -4;
+            }
+          }
+        });
+      } else if (p.character === 'kitana') {
+        // --- KITANA FAN LIFT: rising fan uppercut lifts ALL nearby enemies ---
+        soundManager.playUppercut();
+        screenShakeRef.current = 7;
+
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'FAN LIFT! 🪭',
+          x: p.x,
+          y: p.y - 14,
+          vy: -1.6,
+          color: '#60a5fa',
+          alpha: 1,
+          scale: 1.4,
+        });
+
+        enemiesRef.current.forEach(e => {
+          if (e.isAlive && Math.abs(e.x - p.x) < 75 && Math.abs(e.y - p.y) < 60) {
+            applyDamageToEnemy(e, 3, 'uppercut');
+            if (e.isAlive) {
+              e.vy = -9.5;
+              e.vx = p.facing === 'right' ? 3 : -3;
+              if (e.type === 'kombatant' || e.type === 'fighter_boss' || e.type === 'rival_ninja') {
+                e.isDizzy = true;
+                e.dizzyTimer = 1.8;
+              }
+            }
+          }
+        });
+      } else if (p.character === 'shangtsung') {
+        // --- SHANG TSUNG SHADOW MORPH: demonic shadow rush, fully invincible ---
+        soundManager.playShadowClone();
+        screenShakeRef.current = 9;
+        p.isDashing = true;
+        p.dashTimer = 0.55;
+        p.isInvincible = true;
+        p.invincibleTimer = 0.65;
+        p.vx = p.facing === 'right' ? 11 : -11;
+
+        for (let i = 0; i < 16; i++) {
+          particlesRef.current.push({
+            id: Math.random(),
+            x: p.x + p.width / 2,
+            y: p.y + p.height / 2,
+            vx: (Math.random() - 0.5) * 6,
+            vy: (Math.random() - 0.5) * 6,
+            color: Math.random() > 0.4 ? '#a855f7' : '#22c55e',
+            size: Math.random() * 8 + 4,
+            alpha: 1,
+            decay: 0.04,
+            shape: 'smoke',
+          });
+        }
+
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: 'SHADOW MORPH! 💀',
+          x: p.x,
+          y: p.y - 12,
+          vy: -1.5,
+          color: '#a855f7',
+          alpha: 1,
+          scale: 1.4,
+        });
+
+        enemiesRef.current.forEach(e => {
+          if (e.isAlive && Math.abs(e.x - p.x) < 85 && Math.abs(e.y - p.y) < 55) {
+            applyDamageToEnemy(e, 3, 'tackle');
+          }
+        });
       }
     }
   };
 
   // Damage Enemy Logic
   const applyDamageToEnemy = (enemy: Enemy, dmg: number, source: string) => {
+    // Kombatant guard: MK fighters sometimes BLOCK melee/projectile hits
+    if (
+      (enemy.type === 'kombatant' || enemy.type === 'fighter_boss' || enemy.type === 'rival_ninja') &&
+      !enemy.isDizzy &&
+      !enemy.isFrozen &&
+      (source === 'punch' || source === 'uppercut' || source === 'projectile') &&
+      Math.random() < (enemy.type === 'fighter_boss' ? 0.3 : 0.22)
+    ) {
+      enemy.enemyBlockTimer = 0.5;
+      soundManager.playBlock();
+      floatingTextsRef.current.push({
+        id: Math.random(),
+        text: 'BLOCKED!',
+        x: enemy.x + enemy.width / 2,
+        y: enemy.y - 10,
+        vy: -1.4,
+        color: '#93c5fd',
+        alpha: 1,
+        scale: 1.0,
+      });
+      return;
+    }
+
     enemy.health -= dmg;
 
     // Floating text feedback
@@ -900,9 +1202,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
     if (enemy.health <= 0) {
       enemy.isAlive = false;
-      playerRef.current.score += enemy.type === 'bowser' ? 5000 : 200;
+      enemy.isDizzy = false;
+      playerRef.current.score += enemy.type === 'bowser' || enemy.isBoss ? 5000 : 200;
 
-      if (enemy.type === 'bowser') {
+      if (enemy.type === 'bowser' || enemy.isBoss) {
         soundManager.playVictory();
         // Trigger victory after brief fanfare
         setTimeout(() => {
@@ -917,26 +1220,97 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   };
 
-  // Player Takes Damage
-  const handlePlayerHurt = () => {
+  // Player Takes Damage — MORTAL KOMBAT BLOOD SYSTEM (0-100) + DEFENSE
+  const handlePlayerHurt = (dmg: number = 12) => {
     const p = playerRef.current;
     if (p.isInvincible || p.isDashing || p.isSliding) return;
 
+    // DEFENSE: holding block on the ground absorbs almost everything (chip damage only)
+    if (p.isBlocking && p.isGrounded) {
+      const chip = Math.max(1, Math.round(dmg * 0.1));
+      p.blood = Math.max(0, p.blood - chip);
+      p.health = Math.max(1, Math.ceil((p.blood / p.maxBlood) * 3));
+      soundManager.playBlock();
+      floatingTextsRef.current.push({
+        id: Math.random(),
+        text: 'BLOCKED! 🛡️',
+        x: p.x + p.width / 2,
+        y: p.y - 12,
+        vy: -1.4,
+        color: '#93c5fd',
+        alpha: 1,
+        scale: 1.1,
+      });
+      for (let i = 0; i < 5; i++) {
+        particlesRef.current.push({
+          id: Math.random(),
+          x: p.x + p.width / 2,
+          y: p.y + p.height / 2,
+          vx: (Math.random() - 0.5) * 4,
+          vy: (Math.random() - 0.5) * 4,
+          color: '#bfdbfe',
+          size: Math.random() * 4 + 2,
+          alpha: 1,
+          decay: 0.08,
+          shape: 'spark',
+        });
+      }
+      if (p.blood <= 0) handlePlayerDeath();
+      return;
+    }
+
+    // Fire flower armor absorbs one full hit
     if (p.powerUp === 'flower') {
       p.powerUp = 'mushroom';
+      p.isInvincible = true;
+      p.invincibleTimer = 1.0;
+      soundManager.playBlock();
+      floatingTextsRef.current.push({
+        id: Math.random(),
+        text: 'ARMOR ABSORBED! 🔥',
+        x: p.x + p.width / 2,
+        y: p.y - 12,
+        vy: -1.4,
+        color: '#fdba74',
+        alpha: 1,
+        scale: 1.1,
+      });
+      return;
     } else if (p.powerUp === 'mushroom') {
       p.powerUp = 'none';
-    } else {
-      p.health -= 1;
+      p.isInvincible = true;
+      p.invincibleTimer = 1.0;
+      soundManager.playPunch();
+      return;
+    }
+
+    p.blood = Math.max(0, p.blood - dmg);
+    p.health = Math.max(0, Math.ceil((p.blood / p.maxBlood) * 3));
+
+    // Blood burst particles (MK style)
+    for (let i = 0; i < 8; i++) {
+      particlesRef.current.push({
+        id: Math.random(),
+        x: p.x + p.width / 2,
+        y: p.y + p.height / 2,
+        vx: (Math.random() - 0.5) * 5,
+        vy: (Math.random() - 0.5) * 5 - 1,
+        color: Math.random() > 0.3 ? '#dc2626' : '#7f1d1d',
+        size: Math.random() * 5 + 2,
+        alpha: 1,
+        decay: 0.05,
+        shape: 'spark',
+      });
     }
 
     p.isInvincible = true;
-    p.invincibleTimer = 1.5; // 1.5s invincibility frames
+    p.invincibleTimer = 1.2;
     p.vy = -5.5; // bounce back
     p.vx = p.facing === 'right' ? -4 : 4;
     soundManager.playPunch();
+    screenShakeRef.current = Math.max(screenShakeRef.current, 5);
 
-    if (p.health <= 0) {
+    if (p.blood <= 0) {
       handlePlayerDeath();
     }
   };
@@ -949,9 +1323,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     if (p.lives <= 0) {
       setGameState('game_over');
     } else {
-      // Respawn at level start
+      // Respawn at level start with full MK blood bar
       p.health = 3;
+      p.blood = p.maxBlood;
       p.powerUp = 'none';
+      p.isBlocking = false;
+      p.isCrouching = false;
       loadLevel(currentLevelIndex);
     }
   };
@@ -1031,7 +1408,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     }
     if (p.attackTimer > 0) {
       p.attackTimer -= dt;
-      if (p.attackTimer <= 0) p.isAttacking = false;
+      if (p.attackTimer <= 0) {
+        p.isAttacking = false;
+        p.crouchUppercut = false;
+      }
     }
     if (p.invincibleTimer > 0) {
       p.invincibleTimer -= dt;
@@ -1089,13 +1469,22 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
     // --- PLAYER MOVEMENT & INPUT PHYSICS ---
     const keys = keysRef.current;
+
+    // MK STANCES: hold Block to defend, hold Down to crouch (both root you in place)
+    p.isBlocking = !!keys.block && p.isGrounded && !p.isDashing && !p.isSliding;
+    p.isCrouching = !!keys.down && p.isGrounded && !p.isDashing && !p.isSliding && !p.isBlocking;
+
     const accel = 0.8;
     const maxSpeed = 4.2;
     const friction = 0.82;
     const gravity = 0.52;
 
     if (!p.isDashing && !p.isSliding) {
-      if (keys.left) {
+      if (p.isBlocking || p.isCrouching) {
+        // Rooted stance: heavy friction, no acceleration
+        p.vx *= 0.7;
+        if (Math.abs(p.vx) < 0.3) p.vx = 0;
+      } else if (keys.left) {
         p.vx -= accel;
         p.facing = 'left';
         p.walkCycle += 1;
@@ -1326,9 +1715,30 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               enemy.freezeTimer = 4.0;
               applyDamageToEnemy(enemy, proj.damage, 'freeze');
             } else if (proj.effect === 'pull') {
-              // Scorpion spear pulls enemy
-              enemy.x = p.facing === 'right' ? p.x + p.width + 10 : p.x - enemy.width - 10;
-              applyDamageToEnemy(enemy, proj.damage, 'pull');
+              // Scorpion spear: bosses / MK fighters get DIZZY in place (no pull, no self-damage)
+              if (enemy.type === 'bowser' || enemy.type === 'rival_ninja' || enemy.type === 'fighter_boss' || enemy.isBoss) {
+                enemy.isDizzy = true;
+                enemy.dizzyTimer = 3.2;
+                applyDamageToEnemy(enemy, 5, 'dizzy');
+                soundManager.playDizzy();
+                // Spear guard: Scorpion takes NO damage while the boss is dizzied
+                p.isInvincible = true;
+                p.invincibleTimer = Math.max(p.invincibleTimer, 1.2);
+                floatingTextsRef.current.push({
+                  id: Math.random(),
+                  text: 'DIZZY! 😵 GET OVER HERE!',
+                  x: enemy.x + enemy.width / 2,
+                  y: enemy.y - 16,
+                  vy: -1.5,
+                  color: '#fbbf24',
+                  alpha: 1,
+                  scale: 1.4,
+                });
+              } else {
+                // Regular enemy: classic pull
+                enemy.x = p.facing === 'right' ? p.x + p.width + 10 : p.x - enemy.width - 10;
+                applyDamageToEnemy(enemy, proj.damage, 'pull');
+              }
             } else if (proj.effect === 'tackle') {
               // NOOB SAIBOT SHADOW CLONE RUSH
               applyDamageToEnemy(enemy, proj.damage, 'tackle');
@@ -1368,6 +1778,39 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           enemy.isFrozen = false;
         }
         return; // Don't move or attack while frozen!
+      }
+
+      // DIZZY enemy timer (Scorpion spear / uppercuts) — wobbles in place, open to damage!
+      if (enemy.isDizzy) {
+        enemy.dizzyTimer = (enemy.dizzyTimer || 0) - dt;
+        enemy.x += Math.sin(Date.now() / 90 + enemy.id) * 0.5;
+        // Launched bodies still fall while dizzy — land on solid blocks
+        if (enemy.vy) {
+          enemy.vy += 0.5;
+          enemy.y += enemy.vy;
+          blocksRef.current.forEach(block => {
+            if (block.isDestroyed || block.type === 'lava') return;
+            if (
+              enemy.vy > 0 &&
+              enemy.x + enemy.width > block.x + 2 &&
+              enemy.x < block.x + block.width - 2 &&
+              enemy.y + enemy.height > block.y &&
+              enemy.y + enemy.height - enemy.vy <= block.y + 8
+            ) {
+              enemy.y = block.y - enemy.height;
+              enemy.vy = 0;
+            }
+          });
+        }
+        if ((enemy.dizzyTimer || 0) <= 0) {
+          enemy.isDizzy = false;
+          enemy.vy = 0;
+        }
+        return; // Don't move or attack while dizzy!
+      }
+
+      if (enemy.enemyBlockTimer && enemy.enemyBlockTimer > 0) {
+        enemy.enemyBlockTimer -= dt;
       }
 
       if (enemy.type === 'bowser') {
@@ -1437,7 +1880,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         enemy.attackTimer = (enemy.attackTimer || 0) + dt;
         if (enemy.attackTimer > 2.2) {
           enemy.attackTimer = 0;
-          const rival = enemy.rivalFighter || 'scorpion';
+          const rival = enemy.fighterKind || 'scorpion';
           const dir = enemy.facing === 'right' ? 1 : -1;
 
           if (rival === 'subzero') {
@@ -1512,6 +1955,82 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             });
           }
         }
+      } else if (enemy.type === 'kombatant' || enemy.type === 'fighter_boss') {
+        // --- MK FIGHTER ENEMY: stalks you, punches up close, fires projectiles from afar ---
+        const isFBoss = enemy.type === 'fighter_boss';
+        const bossKind = enemy.fighterKind || 'baraka';
+        const dx = p.x - enemy.x;
+        enemy.facing = dx > 0 ? 'right' : 'left';
+        const enraged = isFBoss && enemy.health < enemy.maxHealth / 2;
+        const stalkSpeed = (isFBoss ? 1.7 : 1.1) * (enraged ? 1.5 : 1);
+        const meleeReach = isFBoss ? 70 : 55;
+
+        if (enemy.meleeCooldown && enemy.meleeCooldown > 0) enemy.meleeCooldown -= dt;
+        if ((enemy.attackTimer || 0) > 0) enemy.attackTimer -= dt;
+
+        if (Math.abs(dx) > meleeReach) {
+          enemy.x += dx > 0 ? stalkSpeed : -stalkSpeed;
+        } else if ((enemy.meleeCooldown || 0) <= 0) {
+          // MELEE STRIKE!
+          enemy.meleeCooldown = enraged ? 0.9 : 1.4;
+          enemy.attackTimer = 0.4;
+          soundManager.playPunch();
+          if (Math.abs(p.x - enemy.x) < meleeReach + 24 && Math.abs(p.y - enemy.y) < 52) {
+            handlePlayerHurt(isFBoss ? 16 : 12);
+            floatingTextsRef.current.push({
+              id: Math.random(),
+              text: isFBoss ? 'BOSS STRIKE! 👊' : 'FIGHTER HIT! 👊',
+              x: p.x + p.width / 2,
+              y: p.y - 12,
+              vy: -1.4,
+              color: '#fca5a5',
+              alpha: 1,
+              scale: 1.1,
+            });
+          }
+        }
+
+        // Ranged attack per fighter kind
+        const rangedCd = enemy.specialCooldown || 0;
+        const rangedInterval = enraged ? 1.4 : 2.4;
+        if (Math.abs(dx) < 430 && Math.abs(dx) > 40 && rangedCd > rangedInterval) {
+          enemy.specialCooldown = 0;
+          const dir = enemy.facing === 'right' ? 1 : -1;
+          const kindShots: Record<string, Projectile['type']> = {
+            baraka: 'blade_spark',
+            liukang: 'dragon_fire',
+            kitana: 'steel_fan',
+            shangtsung: 'soul_skull',
+            subzero: 'ice_blast',
+            scorpion: 'spear',
+            raiden: 'lightning',
+            reptile: 'acid_spit',
+            noob: 'shadow_ball',
+          };
+          const shots = isFBoss && enraged ? 2 : 1;
+          for (let s = 0; s < shots; s++) {
+            projectilesRef.current.push({
+              id: Math.random(),
+              type: kindShots[bossKind] || 'shadow_ball',
+              x: enemy.x + (dir === 1 ? enemy.width + 5 : -26),
+              y: enemy.y + 16 - s * 16,
+              vx: dir * 5.5,
+              vy: 0,
+              width: 24,
+              height: 20,
+              damage: 1,
+              owner: 'enemy',
+              duration: 3.5,
+              active: true,
+              facing: enemy.facing,
+            });
+          }
+          soundManager.playFanThrow();
+        } else {
+          enemy.specialCooldown = rangedCd + dt;
+        }
+
+        if (isFBoss) setBossEnemyState({ ...enemy });
       } else if (enemy.type === 'piranha') {
         // Piranha snaps up and down from pipe
         enemy.animationTimer += dt * 2;
@@ -1544,7 +2063,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         if (p.isDashing || p.isSliding) {
           // Dashing or sliding into enemy damages them safely!
           applyDamageToEnemy(enemy, 1, p.isSliding ? 'slide' : 'dash_tackle');
-        } else if (p.vy > 0 && p.y + p.height - p.vy <= enemy.y + 12 && enemy.type !== 'bowser') {
+        } else if (p.vy > 0 && p.y + p.height - p.vy <= enemy.y + 12 && enemy.type !== 'bowser' && enemy.type !== 'kombatant' && enemy.type !== 'fighter_boss' && enemy.type !== 'rival_ninja') {
           // Classic Mario Stomp jump!
           p.vy = -8.5; // bounce up
           applyDamageToEnemy(enemy, 1, 'stomp');
@@ -1598,6 +2117,57 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       collected: false,
       emerging: true,
       emergeY: block.y,
+    });
+  };
+
+  // PIPE WARP: stand on a glowing warp pipe and press Down to dive inside!
+  const tryPipeWarp = () => {
+    const p = playerRef.current;
+    if (!p.isGrounded) return;
+    const pipe = blocksRef.current.find(
+      b =>
+        !b.isDestroyed &&
+        b.isWarp &&
+        b.warpTo &&
+        (b.type === 'pipe' || b.type === 'pipe_top') &&
+        p.x + p.width > b.x + 4 &&
+        p.x < b.x + b.width - 4 &&
+        Math.abs(p.y + p.height - b.y) < 16
+    );
+    if (!pipe || !pipe.warpTo) return;
+    soundManager.playWarp();
+    p.x = pipe.warpTo.x;
+    p.y = pipe.warpTo.y;
+    p.vx = 0;
+    p.vy = 0;
+    p.isBlocking = false;
+    p.isCrouching = false;
+    p.isInvincible = true;
+    p.invincibleTimer = Math.max(p.invincibleTimer, 1.0);
+    screenShakeRef.current = 6;
+    for (let i = 0; i < 12; i++) {
+      particlesRef.current.push({
+        id: Math.random(),
+        x: pipe.x + pipe.width / 2,
+        y: pipe.y,
+        vx: (Math.random() - 0.5) * 4,
+        vy: -Math.random() * 4 - 1,
+        color: Math.random() > 0.4 ? '#4ade80' : '#bbf7d0',
+        size: Math.random() * 6 + 3,
+        alpha: 1,
+        decay: 0.05,
+        shape: 'spark',
+      });
+    }
+    floatingTextsRef.current.push({
+      id: Math.random(),
+      text: 'SECRET WARP! ▼',
+      x: pipe.warpTo.x,
+      y: pipe.warpTo.y - 16,
+      vy: -1.5,
+      color: '#4ade80',
+      alpha: 1,
+      scale: 1.4,
     });
   };
 
@@ -1722,6 +2292,169 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.arc(tx, 220, 6 + Math.random() * 3, 0, Math.PI * 2);
         ctx.fill();
       }
+    } else if (levelDef.theme === 'desert') {
+      // Scorching desert dusk
+      const duskGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      duskGrad.addColorStop(0, '#7c2d12');
+      duskGrad.addColorStop(0.6, '#ea580c');
+      duskGrad.addColorStop(1, '#fcd34d');
+      ctx.fillStyle = duskGrad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Pyramid silhouettes
+      ctx.fillStyle = '#451a03';
+      for (let i = 0; i < 4; i++) {
+        const px = ((i * 520 - camX * 0.3) % (canvas.width + 400)) - 200;
+        ctx.beginPath();
+        ctx.moveTo(px, 440);
+        ctx.lineTo(px + 150, 220);
+        ctx.lineTo(px + 300, 440);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Blazing sun
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.arc(canvas.width - 140, 110, 42, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (levelDef.theme === 'airship') {
+      // Stormy sky armada
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      skyGrad.addColorStop(0, '#0c4a6e');
+      skyGrad.addColorStop(1, '#38bdf8');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Distant airships
+      ctx.fillStyle = '#1e293b';
+      for (let i = 0; i < 4; i++) {
+        const ax = ((i * 480 - camX * 0.4) % (canvas.width + 300)) - 150;
+        const ay = 90 + (i % 2) * 60;
+        ctx.fillRect(ax, ay, 130, 34);
+        ctx.fillRect(ax + 20, ay + 34, 90, 14);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(ax + 10, ay + 12, 8, 8);
+        ctx.fillStyle = '#1e293b';
+      }
+
+      // Fast clouds
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      for (let i = 0; i < 6; i++) {
+        const cx = ((i * 300 - camX * 0.7 + Date.now() / 40) % (canvas.width + 200)) - 100;
+        ctx.beginPath();
+        ctx.arc(cx, 200 + (i % 3) * 70, 20, 0, Math.PI * 2);
+        ctx.arc(cx + 22, 196 + (i % 3) * 70, 26, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (levelDef.theme === 'netherrealm') {
+      // Burning netherrealm abyss
+      const abyssGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      abyssGrad.addColorStop(0, '#09090b');
+      abyssGrad.addColorStop(0.7, '#450a0a');
+      abyssGrad.addColorStop(1, '#dc2626');
+      ctx.fillStyle = abyssGrad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Floating ember particles
+      for (let i = 0; i < 14; i++) {
+        const ex = ((i * 173 - camX * 0.5 + Date.now() / 30) % canvas.width);
+        const ey = 420 - ((Date.now() / 12 + i * 67) % 420);
+        ctx.fillStyle = i % 2 === 0 ? '#f97316' : '#facc15';
+        ctx.fillRect(ex, ey, 3, 3);
+      }
+
+      // Demon gate silhouettes
+      ctx.fillStyle = '#18181b';
+      for (let i = 0; i < 6; i++) {
+        const gx = ((i * 300 - camX * 0.3) % canvas.width);
+        ctx.fillRect(gx, 260, 44, 180);
+        ctx.beginPath();
+        ctx.moveTo(gx - 8, 260);
+        ctx.lineTo(gx + 22, 210);
+        ctx.lineTo(gx + 52, 260);
+        ctx.closePath();
+        ctx.fill();
+      }
+    } else if (levelDef.theme === 'forest') {
+      // LIVING FOREST: deep jungle greens with god rays
+      const jungleGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      jungleGrad.addColorStop(0, '#052e16');
+      jungleGrad.addColorStop(0.6, '#14532d');
+      jungleGrad.addColorStop(1, '#166534');
+      ctx.fillStyle = jungleGrad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Giant tree trunks
+      ctx.fillStyle = '#3f2d1c';
+      for (let i = 0; i < 7; i++) {
+        const tx = ((i * 260 - camX * 0.45) % (canvas.width + 200)) - 100;
+        ctx.fillRect(tx, 60, 42, 380);
+        ctx.fillStyle = '#573d26';
+        ctx.fillRect(tx + 8, 60, 8, 380);
+        ctx.fillStyle = '#3f2d1c';
+      }
+
+      // Canopy leaves
+      ctx.fillStyle = '#15803d';
+      for (let i = 0; i < 9; i++) {
+        const lx = ((i * 200 - camX * 0.6) % (canvas.width + 160)) - 80;
+        ctx.beginPath();
+        ctx.arc(lx, 60 + (i % 3) * 22, 46, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#22c55e';
+      for (let i = 0; i < 6; i++) {
+        const lx = ((i * 290 - camX * 0.6 + 90) % (canvas.width + 160)) - 80;
+        ctx.beginPath();
+        ctx.arc(lx, 44 + (i % 2) * 26, 26, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Fireflies
+      for (let i = 0; i < 10; i++) {
+        const fx = ((i * 211 - camX * 0.5) % canvas.width);
+        const fy = 150 + ((i * 97 + Date.now() / 25) % 250);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(fx, fy, 3, 3);
+      }
+    } else if (levelDef.theme === 'pit') {
+      // KAHN'S PIT: dark arena with bridge over the abyss
+      const pitGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      pitGrad.addColorStop(0, '#0f0a1e');
+      pitGrad.addColorStop(0.55, '#2e1065');
+      pitGrad.addColorStop(0.8, '#7c2d12');
+      pitGrad.addColorStop(1, '#030308');
+      ctx.fillStyle = pitGrad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Arena columns
+      ctx.fillStyle = '#312e81';
+      for (let i = 0; i < 6; i++) {
+        const cx = ((i * 320 - camX * 0.35) % canvas.width);
+        ctx.fillRect(cx, 80, 54, 300);
+        ctx.fillStyle = '#4338ca';
+        ctx.fillRect(cx - 6, 70, 66, 14);
+        ctx.fillRect(cx - 6, 376, 66, 14);
+        ctx.fillStyle = '#312e81';
+      }
+
+      // Moon of Outworld
+      ctx.fillStyle = '#e9d5ff';
+      ctx.beginPath();
+      ctx.arc(150, 100, 36, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0f0a1e';
+      ctx.beginPath();
+      ctx.arc(164, 92, 30, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Abyss glow cracks
+      ctx.fillStyle = '#f97316';
+      for (let i = 0; i < 5; i++) {
+        const gx = ((i * 260 - camX * 0.8) % canvas.width);
+        ctx.fillRect(gx, 452, 60, 3);
+      }
     }
 
     // --- APPLY CAMERA TRANSLATION & SCREEN SHAKE ---
@@ -1764,6 +2497,14 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         SpriteRenderer.drawAcid(ctx, proj);
       } else if (proj.type === 'bowser_fire') {
         SpriteRenderer.drawBowserFire(ctx, proj);
+      } else if (proj.type === 'blade_spark') {
+        SpriteRenderer.drawBlade(ctx, proj);
+      } else if (proj.type === 'dragon_fire') {
+        SpriteRenderer.drawDragonFire(ctx, proj);
+      } else if (proj.type === 'steel_fan') {
+        SpriteRenderer.drawFan(ctx, proj);
+      } else if (proj.type === 'soul_skull') {
+        SpriteRenderer.drawSkull(ctx, proj);
       } else if (proj.type === 'shadow_ball') {
         // NOOB SAIBOT DARK VORTEX
         ctx.save();
@@ -1824,6 +2565,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       | 'closeSpecial'
       | 'dash'
       | 'dashUp'
+      | 'down'
+      | 'block'
       | 'special1'
       | 'special2'
   ) => {
@@ -1885,6 +2628,17 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
     if (action === 'dash') triggerDash(keysRef.current.jump ? 'up' : 'forward');
     if (action === 'dashUp') triggerDash('up');
+
+    // DOWN / CROUCH + PIPE ENTER (hold to crouch, tap on warp pipe to dive in)
+    if (action === 'down') {
+      keysRef.current.down = true;
+      tryPipeWarp();
+    }
+
+    // BLOCK / DEFEND (hold to guard)
+    if (action === 'block') {
+      keysRef.current.block = true;
+    }
   };
 
   const handleTouchRelease = (
@@ -1897,12 +2651,16 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       | 'closeSpecial'
       | 'dash'
       | 'dashUp'
+      | 'down'
+      | 'block'
       | 'special1'
       | 'special2'
   ) => {
     if (action === 'left') keysRef.current.left = false;
     if (action === 'right') keysRef.current.right = false;
     if (action === 'jump') keysRef.current.jump = false;
+    if (action === 'down') keysRef.current.down = false;
+    if (action === 'block') keysRef.current.block = false;
   };
 
   const toggleSound = () => {

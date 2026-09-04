@@ -13,6 +13,8 @@ export interface MobileControlsProps {
       | 'closeSpecial'
       | 'dash'
       | 'dashUp'
+      | 'down'
+      | 'block'
       | 'special1'
       | 'special2'
   ) => void;
@@ -26,6 +28,8 @@ export interface MobileControlsProps {
       | 'closeSpecial'
       | 'dash'
       | 'dashUp'
+      | 'down'
+      | 'block'
       | 'special1'
       | 'special2'
   ) => void;
@@ -65,6 +69,8 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
       | 'closeSpecial'
       | 'dash'
       | 'dashUp'
+      | 'down'
+      | 'block'
       | 'special1'
       | 'special2'
   ) => {
@@ -142,6 +148,42 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
           rangedTheme:
             'bg-emerald-950/90 border-emerald-400 text-emerald-100 shadow-[0_0_14px_rgba(34,197,94,0.45)]',
         };
+      case 'baraka':
+        return {
+          rangedName: 'شرارة شفرة 🔪',
+          rangedSub: 'Blade Spark',
+          closeName: 'تمزيق دوار 🌀',
+          closeShort: 'تمزيق 🌀',
+          rangedTheme:
+            'bg-rose-950/90 border-rose-400 text-rose-100 shadow-[0_0_14px_rgba(244,63,94,0.45)]',
+        };
+      case 'liukang':
+        return {
+          rangedName: 'نار التنين 🐉',
+          rangedSub: 'Dragon Fire',
+          closeName: 'ركلة الدراجة 🦵',
+          closeShort: 'دراجة 🦵',
+          rangedTheme:
+            'bg-orange-950/90 border-orange-400 text-orange-100 shadow-[0_0_14px_rgba(249,115,22,0.45)]',
+        };
+      case 'kitana':
+        return {
+          rangedName: 'رمي مروحة 🪭',
+          rangedSub: 'Fan Throw',
+          closeName: 'رفعة مروحة ⬆️',
+          closeShort: 'رفعة ⬆️',
+          rangedTheme:
+            'bg-blue-950/90 border-blue-400 text-blue-100 shadow-[0_0_14px_rgba(96,165,250,0.45)]',
+        };
+      case 'shangtsung':
+        return {
+          rangedName: 'جمجمة روح 💀',
+          rangedSub: 'Soul Skull',
+          closeName: 'تحول ظل 👤',
+          closeShort: 'تحول 👤',
+          rangedTheme:
+            'bg-violet-950/90 border-violet-400 text-violet-100 shadow-[0_0_14px_rgba(168,85,247,0.45)]',
+        };
     }
   };
 
@@ -161,7 +203,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
           <span className="text-neutral-500">|</span>
           <span className="text-cyan-400 font-bold">2x ⬅️/➡️ = ⚡ شفت خاطف</span>
           <span className="text-neutral-500">|</span>
-          <span className="text-red-400 font-bold">2x 🥊 = {fighter.closeShort}</span>
+          <span className="text-blue-300 font-bold">🛡️ دفاع + ▼ انحناء/أنبوب</span>
         </div>
       </div>
 
@@ -174,7 +216,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
             id="btn-move-left"
             type="button"
             {...bindControl('left')}
-            className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-neutral-900/90 border-2 border-neutral-700 active:border-cyan-400 active:bg-neutral-800 text-white flex flex-col items-center justify-center shadow-xl active:scale-95 transition-transform backdrop-blur-sm"
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-neutral-900/90 border-2 border-neutral-700 active:border-cyan-400 active:bg-neutral-800 text-white flex flex-col items-center justify-center shadow-xl active:scale-95 transition-transform backdrop-blur-sm"
             aria-label="Move Left / Double-tap to Dash Left"
           >
             <svg className="w-7 h-7 sm:w-8 sm:h-8 text-neutral-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,7 +231,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
             id="btn-move-right"
             type="button"
             {...bindControl('right')}
-            className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-neutral-900/90 border-2 border-neutral-700 active:border-cyan-400 active:bg-neutral-800 text-white flex flex-col items-center justify-center shadow-xl active:scale-95 transition-transform backdrop-blur-sm"
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-neutral-900/90 border-2 border-neutral-700 active:border-cyan-400 active:bg-neutral-800 text-white flex flex-col items-center justify-center shadow-xl active:scale-95 transition-transform backdrop-blur-sm"
             aria-label="Move Right / Double-tap to Dash Right"
           >
             <svg className="w-7 h-7 sm:w-8 sm:h-8 text-neutral-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,10 +240,37 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
             <span className="text-[11px] font-black text-neutral-200">يمين</span>
             <span className="text-[8px] font-mono text-cyan-400 tracking-tighter">2x ⚡ شفت</span>
           </button>
+
+          {/* DOWN / CROUCH / PIPE ENTER BUTTON */}
+          <button
+            id="btn-move-down"
+            type="button"
+            {...bindControl('down')}
+            className="w-14 h-16 sm:w-16 sm:h-20 rounded-2xl bg-neutral-900/90 border-2 border-emerald-700 active:border-emerald-400 active:bg-neutral-800 text-white flex flex-col items-center justify-center shadow-xl active:scale-95 transition-transform backdrop-blur-sm"
+            aria-label="Crouch / Enter Warp Pipe"
+          >
+            <svg className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+            <span className="text-[11px] font-black text-neutral-200">▼ انحناء</span>
+            <span className="text-[8px] font-mono text-emerald-400 tracking-tighter">أنبوب ▼</span>
+          </button>
         </div>
 
-        {/* RIGHT SIDE: 3 Ergonomic Buttons (Ranged Special, Attack, Jump) */}
-        <div className="flex items-end gap-2.5 pointer-events-auto" dir="ltr">
+        {/* RIGHT SIDE: 4 Ergonomic Buttons (Defend, Ranged Special, Attack, Jump) */}
+        <div className="flex items-end gap-2 sm:gap-2.5 pointer-events-auto" dir="ltr">
+          {/* 0. DEDICATED DEFEND (زر الدفاع — اضغط باستمرار للصد) */}
+          <button
+            id="btn-action-defend"
+            type="button"
+            {...bindControl('block')}
+            className="w-14 h-16 sm:w-16 sm:h-20 rounded-2xl bg-blue-950/90 border-2 border-blue-400 active:border-blue-200 active:bg-blue-900 text-white flex flex-col items-center justify-center shadow-xl active:scale-95 transition-transform backdrop-blur-sm"
+            aria-label="Defend / Block"
+          >
+            <span className="text-lg sm:text-xl leading-tight">🛡️</span>
+            <span className="text-[11px] font-black leading-tight">دفاع</span>
+            <span className="text-[8px] font-mono text-blue-200 tracking-tighter">اضغط مطولاً</span>
+          </button>
           {/* 1. DEDICATED RANGED SPECIAL (حركة 2 البعيدة - زر منفصل ومخصص) */}
           <button
             id="btn-action-ranged-special"
@@ -225,7 +294,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
             id="btn-action-attack"
             type="button"
             {...bindControl('attack')}
-            className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-red-900/90 border-2 border-red-500 active:border-red-300 active:bg-red-800 text-white flex flex-col items-center justify-center shadow-xl active:scale-95 transition-transform backdrop-blur-sm"
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-red-900/90 border-2 border-red-500 active:border-red-300 active:bg-red-800 text-white flex flex-col items-center justify-center shadow-xl active:scale-95 transition-transform backdrop-blur-sm"
             aria-label="Attack / Double-tap for Close Special"
           >
             <span className="text-xs sm:text-sm font-black leading-tight">🥊 قتال</span>
@@ -239,7 +308,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
             id="btn-action-jump"
             type="button"
             {...bindControl('jump')}
-            className={`w-16 h-16 sm:w-18 sm:h-18 rounded-2xl border-2 flex flex-col items-center justify-center text-white shadow-2xl active:scale-95 transition-transform backdrop-blur-sm ${
+            className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-2 flex flex-col items-center justify-center text-white shadow-2xl active:scale-95 transition-transform backdrop-blur-sm ${
               isUpShiftAvailable
                 ? 'bg-emerald-700/90 border-emerald-400 active:bg-emerald-600 shadow-[0_0_12px_rgba(16,185,129,0.4)]'
                 : 'bg-emerald-900/70 border-emerald-600/60 text-emerald-200'

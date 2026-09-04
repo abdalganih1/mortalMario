@@ -1,4 +1,4 @@
-export type FighterId = 'subzero' | 'scorpion' | 'noob' | 'raiden' | 'reptile';
+export type FighterId = 'subzero' | 'scorpion' | 'noob' | 'raiden' | 'reptile' | 'baraka' | 'liukang' | 'kitana' | 'shangtsung';
 
 export interface FighterConfig {
   id: FighterId;
@@ -30,6 +30,11 @@ export interface Player {
   character: FighterId;
   health: number;
   maxHealth: number;
+  blood: number;
+  maxBlood: number;
+  isBlocking: boolean;
+  isCrouching: boolean;
+  crouchUppercut: boolean;
   lives: number;
   score: number;
   coins: number;
@@ -55,8 +60,13 @@ export interface Player {
 
 export interface Enemy {
   id: number;
-  type: 'goomba' | 'koopa' | 'piranha' | 'bowser' | 'rival_ninja';
-  rivalFighter?: FighterId;
+  type: 'goomba' | 'koopa' | 'piranha' | 'bowser' | 'rival_ninja' | 'kombatant' | 'fighter_boss';
+  fighterKind?: FighterId;
+  isBoss?: boolean;
+  isDizzy?: boolean;
+  dizzyTimer?: number;
+  meleeCooldown?: number;
+  enemyBlockTimer?: number;
   x: number;
   y: number;
   vx: number;
@@ -85,6 +95,8 @@ export interface Block {
   height: number;
   type: 'question' | 'brick' | 'stone' | 'pipe' | 'pipe_top' | 'lava' | 'bridge' | 'axe';
   content?: 'coin' | 'mushroom' | 'flower' | 'empty';
+  isWarp?: boolean;
+  warpTo?: { x: number; y: number };
   isHit?: boolean;
   bounceOffset?: number;
   isDestroyed?: boolean;
@@ -106,7 +118,7 @@ export interface Item {
 
 export interface Projectile {
   id: number;
-  type: 'ice_blast' | 'spear' | 'shadow_clone' | 'shadow_ball' | 'bowser_fire' | 'fireball' | 'lightning' | 'acid_spit';
+  type: 'ice_blast' | 'spear' | 'shadow_clone' | 'shadow_ball' | 'bowser_fire' | 'fireball' | 'lightning' | 'acid_spit' | 'blade_spark' | 'dragon_fire' | 'steel_fan' | 'soul_skull';
   x: number;
   y: number;
   vx: number;
@@ -150,7 +162,7 @@ export interface LevelData {
   level: number;
   name: string;
   nameAr: string;
-  theme: 'overworld' | 'underground' | 'castle' | 'desert' | 'airship' | 'netherrealm';
+  theme: 'overworld' | 'underground' | 'castle' | 'desert' | 'airship' | 'netherrealm' | 'forest' | 'pit';
   width: number;
   height: number;
   startX: number;

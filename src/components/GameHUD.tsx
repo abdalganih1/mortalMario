@@ -30,6 +30,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   isPaused,
 }) => {
   const fighter = FIGHTERS[player.character];
+  const bloodPct = Math.max(0, ((player.blood ?? 100) / (player.maxBlood ?? 100)) * 100);
 
   return (
     <div
@@ -38,11 +39,18 @@ export const GameHUD: React.FC<GameHUDProps> = ({
     >
       {/* Top Header Row */}
       <div className="flex items-center justify-between text-xs sm:text-sm text-white font-black drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
-        {/* Left: Player Info & Health */}
+        {/* Left: Player Info & MK BLOOD BAR */}
         <div className="flex items-center gap-2 pointer-events-auto bg-black/60 px-2.5 py-1 rounded-xl border border-neutral-700/60 backdrop-blur-sm">
           <span className="text-base sm:text-lg">{fighter.avatar}</span>
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-0.5">
             <span className="text-[10px] text-neutral-400 leading-none">{fighter.name}</span>
+            {/* MK-style blood bar */}
+            <div className="w-24 sm:w-36 h-2.5 bg-neutral-900 rounded-full overflow-hidden border border-neutral-700" dir="ltr">
+              <div
+                className={`h-full transition-all duration-200 ${bloodPct > 50 ? 'bg-gradient-to-r from-emerald-600 via-yellow-400 to-yellow-300' : bloodPct > 25 ? 'bg-gradient-to-r from-amber-600 via-orange-500 to-yellow-400' : 'bg-gradient-to-r from-red-700 via-red-500 to-red-400 animate-pulse'}`}
+                style={{ width: `${bloodPct}%` }}
+              />
+            </div>
             <div className="flex items-center gap-1 mt-0.5">
               {/* Health Hearts */}
               <div className="flex gap-0.5">
@@ -56,6 +64,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                 ))}
               </div>
               <span className="text-[10px] text-neutral-300 ml-1">x{player.lives}</span>
+              {player.isBlocking && <span className="text-[10px] text-blue-300 font-black">🛡️ دفاع</span>}
             </div>
           </div>
         </div>
@@ -129,31 +138,34 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         </div>
       </div>
 
-      {/* BOSS HEALTH BAR (Appears prominently when Bowser or Rival Ninja is in battle) */}
+      {/* BOSS HEALTH BAR (Bowser, Rival Ninja, Kombatant Boss, Fighter Boss) */}
       {bossEnemy && bossEnemy.isAlive && (
         <div className={`w-full max-w-md mx-auto bg-neutral-950/90 border-2 ${
-          bossEnemy.type === 'rival_ninja' ? 'border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.5)]' : 'border-red-600 shadow-[0_0_20px_rgba(220,38,38,0.5)]'
+          bossEnemy.type === 'bowser' ? 'border-red-600 shadow-[0_0_20px_rgba(220,38,38,0.5)]' : 'border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.5)]'
         } rounded-xl p-2 flex flex-col gap-1 pointer-events-auto backdrop-blur-sm`}>
           <div className="flex items-center justify-between text-xs font-black">
-            <span className={`${bossEnemy.type === 'rival_ninja' ? 'text-amber-400' : 'text-red-500'} flex items-center gap-1`}>
-              <span>{bossEnemy.type === 'rival_ninja' ? '⚔️' : '👑'}</span>
+            <span className={`${bossEnemy.type === 'bowser' ? 'text-red-500' : 'text-amber-400'} flex items-center gap-1`}>
+              <span>{bossEnemy.type === 'bowser' ? '👑' : bossEnemy.type === 'fighter_boss' ? '★' : '⚔️'}</span>
               <span>
-                {bossEnemy.type === 'rival_ninja'
-                  ? `RIVAL BOSS: ${(bossEnemy.rivalFighter || 'ninja').toUpperCase()} • الزعيم المنافس`
-                  : 'BOWSER • باوزر زعيم القلعة'}
+                {bossEnemy.type === 'bowser'
+                  ? 'BOWSER • باوزر زعيم القلعة'
+                  : bossEnemy.type === 'fighter_boss'
+                  ? `FINAL BOSS: ${(bossEnemy.fighterKind || 'warlord').toUpperCase()} • زعيم المقاتلين`
+                  : `RIVAL BOSS: ${(bossEnemy.fighterKind || 'ninja').toUpperCase()} • الزعيم المنافس`}
               </span>
+              {(bossEnemy.isDizzy) && <span className="text-yellow-300 animate-pulse">😵 دايخ!</span>}
             </span>
             <span className="text-amber-400 font-mono">
               {bossEnemy.health} / {bossEnemy.maxHealth} HP
             </span>
           </div>
           {/* Health Gauge */}
-          <div className="w-full h-3 bg-neutral-900 rounded-full overflow-hidden border border-neutral-700">
+          <div className="w-full h-3 bg-neutral-900 rounded-full overflow-hidden border border-neutral-700" dir="ltr">
             <div
               className={`h-full ${
-                bossEnemy.type === 'rival_ninja'
-                  ? 'bg-gradient-to-r from-amber-600 via-yellow-500 to-emerald-400'
-                  : 'bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400'
+                bossEnemy.type === 'bowser'
+                  ? 'bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400'
+                  : 'bg-gradient-to-r from-amber-600 via-yellow-500 to-emerald-400'
               } transition-all duration-200`}
               style={{ width: `${Math.max(0, (bossEnemy.health / bossEnemy.maxHealth) * 100)}%` }}
             />

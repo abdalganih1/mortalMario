@@ -543,6 +543,94 @@ class RetroAudio {
       // AudioContext handling
     }
   }
+
+  playBlock() {
+    if (this.isMuted) return;
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+      // Heavy metallic clang — successful defense
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(900, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.14);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.14);
+    } catch {
+      // AudioContext handling
+    }
+  }
+
+  playDizzy() {
+    if (this.isMuted) return;
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+      // Wobbly descending dizzy whistle
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(700, this.ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(200, this.ctx.currentTime + 0.4);
+      gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.45);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.45);
+    } catch {
+      // AudioContext handling
+    }
+  }
+
+  playWarp() {
+    if (this.isMuted) return;
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+      // Classic pipe warp sweep downward
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.35);
+      gain.gain.setValueAtTime(0.22, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.4);
+    } catch {
+      // AudioContext handling
+    }
+  }
+
+  playFanThrow() {
+    if (this.isMuted) return;
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+      // Whistling steel fan spin
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1400, this.ctx.currentTime + 0.18);
+      gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.2);
+    } catch {
+      // AudioContext handling
+    }
+  }
 }
 
 export const soundManager = new RetroAudio();

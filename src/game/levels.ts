@@ -29,7 +29,7 @@ export const LEVEL_DEFINITIONS: LevelData[] = [
 
       // Warp pipes
       { id: 110, x: 560, y: 380, width: 48, height: 60, type: 'pipe' },
-      { id: 111, x: 740, y: 350, width: 48, height: 90, type: 'pipe' },
+      { id: 111, x: 740, y: 350, width: 48, height: 90, type: 'pipe', isWarp: true, warpTo: { x: 1900, y: 240 } },
       { id: 112, x: 920, y: 320, width: 48, height: 120, type: 'pipe' },
 
       // Second block structure with hidden flower and coins
@@ -89,7 +89,7 @@ export const LEVEL_DEFINITIONS: LevelData[] = [
 
       // Pipes with piranhas
       { id: 210, x: 680, y: 350, width: 48, height: 90, type: 'pipe' },
-      { id: 211, x: 920, y: 310, width: 48, height: 130, type: 'pipe' },
+      { id: 211, x: 920, y: 310, width: 48, height: 130, type: 'pipe', isWarp: true, warpTo: { x: 2080, y: 240 } },
       { id: 212, x: 1200, y: 350, width: 48, height: 90, type: 'pipe' },
 
       // Flying platforms and question blocks
@@ -303,7 +303,7 @@ export const LEVEL_DEFINITIONS: LevelData[] = [
       ...createGround(2100, 1100, 440, 40, 'stone'),
       { id: 540, x: 2260, y: 320, width: 160, height: 28, type: 'brick' },
       { id: 541, x: 2320, y: 320, width: 32, height: 28, type: 'question', content: 'flower' },
-      { id: 542, x: 2500, y: 350, width: 48, height: 90, type: 'pipe' },
+      { id: 542, x: 2500, y: 350, width: 48, height: 90, type: 'pipe', isWarp: true, warpTo: { x: 2900, y: 300 } },
       { id: 543, x: 2750, y: 320, width: 48, height: 120, type: 'pipe' },
 
       // Goal Airship Cabin
@@ -372,6 +372,7 @@ export const LEVEL_DEFINITIONS: LevelData[] = [
     ],
     enemies: [
       { type: 'koopa', x: 450, y: 395, vx: -1.7, vy: 0, width: 32, height: 42, health: 2, maxHealth: 2, facing: 'left' },
+      { type: 'kombatant', fighterKind: 'kitana', x: 800, y: 390, vx: -1.2, vy: 0, width: 32, height: 48, health: 4, maxHealth: 4, facing: 'left' },
       { type: 'goomba', x: 750, y: 400, vx: -1.5, vy: 0, width: 30, height: 30, health: 1, maxHealth: 1, facing: 'left' },
       { type: 'koopa', x: 1400, y: 395, vx: -1.7, vy: 0, width: 32, height: 42, health: 2, maxHealth: 2, facing: 'left' },
       // --- RIVAL NINJA BOSS ---
@@ -403,6 +404,149 @@ export const LEVEL_DEFINITIONS: LevelData[] = [
         facing: 'left',
         attackTimer: 0,
         phase: 1,
+      },
+    ],
+  },
+
+  // --- WORLD 7: LIVING FOREST (BRANCHING HIGH CANOPY / LOW SWAMP ROUTES + BARAKA WARLORD BOSS) ---
+  {
+    world: 7,
+    level: 1,
+    name: 'Living Forest - Baraka Warlord',
+    nameAr: 'العالم 7: الغابة الحية وزعيم باراكا',
+    theme: 'forest',
+    width: 3400,
+    height: 480,
+    startX: 60,
+    startY: 380,
+    goalX: 3250,
+    hasRivalBoss: true,
+    blocks: [
+      // Jungle floor
+      ...createGround(0, 1250, 440, 40, 'stone'),
+      { id: 701, x: 260, y: 320, width: 32, height: 32, type: 'question', content: 'mushroom' },
+      { id: 702, x: 292, y: 320, width: 32, height: 32, type: 'brick' },
+      { id: 703, x: 324, y: 320, width: 32, height: 32, type: 'question', content: 'flower' },
+
+      // Warp pipe: dive down to the secret canopy road
+      { id: 710, x: 640, y: 360, width: 48, height: 80, type: 'pipe', isWarp: true, warpTo: { x: 1300, y: 200 } },
+
+      // LOW ROUTE: swamp water gaps (lava = swamp) with stone hops
+      ...createGround(1250, 300, 450, 30, 'lava'),
+      ...createGround(1250, 120, 400, 40, 'stone'),
+      ...createGround(1470, 120, 400, 40, 'stone'),
+      ...createGround(1690, 120, 400, 40, 'stone'),
+      ...createGround(1910, 120, 400, 40, 'stone'),
+
+      // HIGH ROUTE: canopy bridges through the treetops
+      ...createBridge(1250, 900, 250, 20),
+      { id: 720, x: 1400, y: 180, width: 32, height: 28, type: 'question', content: 'coin' },
+      { id: 721, x: 1432, y: 180, width: 32, height: 28, type: 'question', content: 'flower' },
+      { id: 722, x: 1700, y: 180, width: 32, height: 28, type: 'question', content: 'mushroom' },
+
+      // Canopy exit pipe back down to the forest floor
+      { id: 730, x: 2100, y: 190, width: 48, height: 60, type: 'pipe', isWarp: true, warpTo: { x: 2280, y: 340 } },
+
+      // Reunited forest floor
+      ...createGround(2150, 400, 440, 40, 'stone'),
+      { id: 740, x: 2220, y: 320, width: 96, height: 28, type: 'brick' },
+      { id: 741, x: 2252, y: 320, width: 32, height: 28, type: 'question', content: 'flower' },
+
+      // BARAKA WARLORD ARENA (x: 2550 to 3150)
+      ...createGround(2550, 600, 440, 40, 'stone'),
+      ...createStairs(2510, 440, 3, 32, 1),
+      { id: 799, x: 3250, y: 220, width: 50, height: 220, type: 'stone' },
+    ],
+    enemies: [
+      { type: 'goomba', x: 400, y: 400, vx: -1.4, vy: 0, width: 30, height: 30, health: 1, maxHealth: 1, facing: 'left' },
+      { type: 'kombatant', fighterKind: 'baraka', x: 900, y: 390, vx: -1.0, vy: 0, width: 32, height: 48, health: 4, maxHealth: 4, facing: 'left' },
+      { type: 'koopa', x: 1350, y: 205, vx: -1.5, vy: 0, width: 32, height: 42, health: 2, maxHealth: 2, facing: 'left' },
+      { type: 'kombatant', fighterKind: 'liukang', x: 1600, y: 390, vx: -1.2, vy: 0, width: 32, height: 48, health: 4, maxHealth: 4, facing: 'left' },
+      { type: 'piranha', x: 1808, y: 368, vx: 0, vy: 0, width: 32, height: 32, health: 2, maxHealth: 2, facing: 'left' },
+      { type: 'kombatant', fighterKind: 'baraka', x: 2300, y: 390, vx: -1.3, vy: 0, width: 32, height: 48, health: 5, maxHealth: 5, facing: 'left' },
+      { type: 'koopa', x: 2450, y: 395, vx: -1.6, vy: 0, width: 32, height: 42, health: 2, maxHealth: 2, facing: 'left' },
+      // --- BARAKA WARLORD (FIGHTER BOSS) ---
+      {
+        type: 'fighter_boss',
+        fighterKind: 'baraka',
+        isBoss: true,
+        x: 2800,
+        y: 380,
+        vx: -1.4,
+        vy: 0,
+        width: 40,
+        height: 58,
+        health: 130,
+        maxHealth: 130,
+        facing: 'left',
+        attackTimer: 0,
+        specialCooldown: 1.6,
+      },
+    ],
+  },
+
+  // --- WORLD 8: KAHN'S PIT ARENA (FINAL FIGHTER-BOSS: SHANG TSUNG, NO DRAGON) ---
+  {
+    world: 8,
+    level: 1,
+    name: "Kahn's Pit - Shang Tsung Final",
+    nameAr: 'العالم 8: حلبة شانغ تسونغ والنزال الأخير',
+    theme: 'pit',
+    width: 3200,
+    height: 480,
+    startX: 60,
+    startY: 380,
+    goalX: 3050,
+    hasBoss: true,
+    hasRivalBoss: true,
+    blocks: [
+      // Entrance platform
+      ...createGround(0, 900, 440, 40, 'stone'),
+      { id: 801, x: 260, y: 320, width: 32, height: 32, type: 'question', content: 'flower' },
+      { id: 802, x: 292, y: 320, width: 32, height: 32, type: 'question', content: 'mushroom' },
+      { id: 803, x: 324, y: 320, width: 32, height: 32, type: 'question', content: 'coin' },
+
+      // Bottomless pit: TWO routes — low bridge or high stone ledges
+      ...createGround(900, 700, 450, 30, 'lava'),
+      ...createBridge(900, 700, 440, 20),
+      { id: 810, x: 1050, y: 300, width: 120, height: 28, type: 'stone' },
+      { id: 811, x: 1300, y: 240, width: 120, height: 28, type: 'stone' },
+      { id: 812, x: 1340, y: 180, width: 32, height: 28, type: 'question', content: 'flower' },
+
+      // Warp pipe shortcut across the pit
+      { id: 820, x: 700, y: 360, width: 48, height: 80, type: 'pipe', isWarp: true, warpTo: { x: 1700, y: 340 } },
+
+      // Mid arena with guards
+      ...createGround(1600, 600, 440, 40, 'stone'),
+      { id: 830, x: 1750, y: 320, width: 120, height: 28, type: 'brick' },
+      { id: 831, x: 1790, y: 320, width: 32, height: 28, type: 'question', content: 'flower' },
+
+      // FINAL ARENA: Shang Tsung throne platform (x: 2200 to 3000)
+      ...createStairs(2160, 440, 3, 32, 1),
+      ...createGround(2256, 750, 380, 100, 'stone'),
+      { id: 840, x: 2400, y: 260, width: 32, height: 28, type: 'question', content: 'mushroom' },
+      { id: 899, x: 3050, y: 180, width: 50, height: 200, type: 'stone' },
+    ],
+    enemies: [
+      { type: 'kombatant', fighterKind: 'kitana', x: 600, y: 390, vx: -1.2, vy: 0, width: 32, height: 48, health: 4, maxHealth: 4, facing: 'left' },
+      { type: 'koopa', x: 1700, y: 395, vx: -1.7, vy: 0, width: 32, height: 42, health: 2, maxHealth: 2, facing: 'left' },
+      { type: 'kombatant', fighterKind: 'shangtsung', x: 1950, y: 390, vx: -1.3, vy: 0, width: 32, height: 48, health: 6, maxHealth: 6, facing: 'left' },
+      // --- SHANG TSUNG (FINAL FIGHTER BOSS) ---
+      {
+        type: 'fighter_boss',
+        fighterKind: 'shangtsung',
+        isBoss: true,
+        x: 2600,
+        y: 320,
+        vx: -1.6,
+        vy: 0,
+        width: 42,
+        height: 60,
+        health: 200,
+        maxHealth: 200,
+        facing: 'left',
+        attackTimer: 0,
+        specialCooldown: 1.4,
       },
     ],
   },

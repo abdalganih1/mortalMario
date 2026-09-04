@@ -48,12 +48,12 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
             اختر مقاتلك للمغامرة
           </h1>
           <p className="text-xs text-neutral-400">
-            تم تحديث مقاتلي مورتال كومبات بأحدث الحركات والرسوميات الكلاسيكية
+            اسحب أفقياً لتصفح المقاتلين التسعة 👉 ثم اضغط على بطاقة المقاتل
           </p>
         </div>
 
-        {/* Fighter Cards Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
+        {/* Fighter Cards — swipe carousel on mobile, grid on desktop */}
+        <div className="flex sm:grid sm:grid-cols-3 gap-2.5 sm:gap-3 overflow-x-auto sm:overflow-visible snap-x snap-mandatory sm:snap-none pb-2 -mx-1 px-1">
           {fighters.map(fighter => {
             const isSelected = selectedFighter === fighter.id;
             return (
@@ -61,7 +61,7 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                 key={fighter.id}
                 id={`select-fighter-${fighter.id}`}
                 onClick={() => handlePick(fighter.id)}
-                className={`group relative p-4 rounded-xl border-2 text-right transition-all flex flex-col justify-between overflow-hidden ${
+                className={`group relative p-4 rounded-xl border-2 text-right transition-all flex flex-col justify-between overflow-hidden snap-center shrink-0 w-[68vw] max-w-[240px] sm:w-auto sm:max-w-none min-h-[150px] ${
                   isSelected
                     ? 'border-red-500 bg-neutral-900 shadow-[0_0_20px_rgba(239,68,68,0.3)] scale-[1.02]'
                     : 'border-neutral-800 bg-neutral-900/60 hover:border-neutral-700 hover:bg-neutral-900/90 opacity-80'
