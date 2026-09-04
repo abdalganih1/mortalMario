@@ -1,4 +1,4 @@
-export type FighterId = 'subzero' | 'scorpion' | 'noob' | 'raiden' | 'reptile' | 'baraka' | 'liukang' | 'kitana' | 'shangtsung' | 'kunglao' | 'johnnycage' | 'jax' | 'sonya';
+export type FighterId = 'subzero' | 'scorpion' | 'noob' | 'raiden' | 'reptile' | 'baraka' | 'liukang' | 'kitana' | 'shangtsung' | 'kunglao' | 'johnnycage' | 'jax' | 'sonya' | 'kano' | 'jade' | 'mileena' | 'ermac' | 'smoke' | 'rain' | 'sindel' | 'nightwolf' | 'kabal' | 'sheeva' | 'quanchi' | 'fujin' | 'striker' | 'goro' | 'kintaro' | 'shaokahn';
 
 export interface FighterConfig {
   id: FighterId;
@@ -124,7 +124,7 @@ export interface Item {
 
 export interface Projectile {
   id: number;
-  type: 'ice_blast' | 'spear' | 'shadow_clone' | 'shadow_ball' | 'bowser_fire' | 'fireball' | 'lightning' | 'acid_spit' | 'blade_spark' | 'dragon_fire' | 'steel_fan' | 'soul_skull' | 'razor_hat' | 'cage_bolt' | 'shockwave' | 'energy_ring' | 'hammer';
+  type: 'ice_blast' | 'spear' | 'shadow_clone' | 'shadow_ball' | 'bowser_fire' | 'fireball' | 'lightning' | 'acid_spit' | 'blade_spark' | 'dragon_fire' | 'steel_fan' | 'soul_skull' | 'razor_hat' | 'cage_bolt' | 'shockwave' | 'energy_ring' | 'hammer' | 'kano_knife' | 'jade_rang' | 'mileena_sai' | 'rain_ball' | 'wolf_arrow' | 'fujin_wind' | 'striker_nade';
   x: number;
   y: number;
   vx: number;

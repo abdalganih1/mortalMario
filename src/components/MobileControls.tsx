@@ -224,6 +224,38 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
           rangedTheme:
             'bg-pink-950/90 border-pink-400 text-pink-100 shadow-[0_0_14px_rgba(244,114,182,0.45)]',
         };
+      case 'kano':
+        return { rangedName: 'سكين كانو 🔪', rangedSub: 'Knife', closeName: 'كرة مدفع 🌀', closeShort: 'مدفع 🌀', rangedTheme: 'bg-red-950/90 border-red-400 text-red-100 shadow-[0_0_14px_rgba(239,68,68,0.45)]' };
+      case 'jade':
+        return { rangedName: 'بوميرانغ 🪃', rangedSub: 'Rang', closeName: 'ركلة خفية 🦵', closeShort: 'خفية 🦵', rangedTheme: 'bg-emerald-950/90 border-emerald-400 text-emerald-100 shadow-[0_0_14px_rgba(16,185,129,0.45)]' };
+      case 'mileena':
+        return { rangedName: 'سكين ساي 👄', rangedSub: 'Sai', closeName: 'انقضاض 👊', closeShort: 'عضة 👊', rangedTheme: 'bg-pink-950/90 border-pink-400 text-pink-100 shadow-[0_0_14px_rgba(236,72,153,0.45)]' };
+      case 'ermac':
+        return { rangedName: 'رفع ذهني 🔴', rangedSub: 'Slam', closeName: 'انتقال شبحي 👤', closeShort: 'شبح 👤', rangedTheme: 'bg-red-950/90 border-red-400 text-red-100 shadow-[0_0_14px_rgba(220,38,38,0.45)]' };
+      case 'smoke':
+        return { rangedName: 'قنبلة دخان 💨', rangedSub: 'Bomb', closeName: 'اندفاع دخان 🌀', closeShort: 'دخان 🌀', rangedTheme: 'bg-gray-950/90 border-gray-400 text-gray-100 shadow-[0_0_14px_rgba(156,163,175,0.45)]' };
+      case 'rain':
+        return { rangedName: 'كرة ماء 🌧️', rangedSub: 'Water', closeName: 'ينبوع ⬆️', closeShort: 'ينبوع ⬆️', rangedTheme: 'bg-sky-950/90 border-sky-400 text-sky-100 shadow-[0_0_14px_rgba(14,165,233,0.45)]' };
+      case 'sindel':
+        return { rangedName: 'صرخة 📢', rangedSub: 'Scream', closeName: 'جلدة شعر 💇', closeShort: 'جلدة 💇', rangedTheme: 'bg-purple-950/90 border-purple-400 text-purple-100 shadow-[0_0_14px_rgba(192,132,252,0.45)]' };
+      case 'nightwolf':
+        return { rangedName: 'سهم روح 🐺', rangedSub: 'Arrow', closeName: 'توماهوك 🪓', closeShort: 'فأس 🪓', rangedTheme: 'bg-yellow-950/90 border-yellow-400 text-yellow-100 shadow-[0_0_14px_rgba(161,98,7,0.45)]' };
+      case 'kabal':
+        return { rangedName: 'منشار 🌪️', rangedSub: 'Saw', closeName: 'نوماد ⚡', closeShort: 'نوماد ⚡', rangedTheme: 'bg-stone-950/90 border-stone-400 text-stone-100 shadow-[0_0_14px_rgba(120,113,108,0.45)]' };
+      case 'sheeva':
+        return { rangedName: 'نار شيفا 🔥', rangedSub: 'Fire', closeName: 'زلزال 👊', closeShort: 'زلزال 👊', rangedTheme: 'bg-orange-950/90 border-orange-400 text-orange-100 shadow-[0_0_14px_rgba(234,88,12,0.45)]' };
+      case 'quanchi':
+        return { rangedName: 'جمجمة 🔮', rangedSub: 'Skull', closeName: 'غيبوبة 😵', closeShort: 'غيبوبة 😵', rangedTheme: 'bg-lime-950/90 border-lime-400 text-lime-100 shadow-[0_0_14px_rgba(101,163,13,0.45)]' };
+      case 'fujin':
+        return { rangedName: 'عاصفة 🌪️', rangedSub: 'Wind', closeName: 'ركلة سماء 🦵', closeShort: 'سماء 🦵', rangedTheme: 'bg-slate-950/90 border-slate-200 text-slate-100 shadow-[0_0_14px_rgba(226,232,240,0.45)]' };
+      case 'striker':
+        return { rangedName: 'قنبلة 🚔', rangedSub: 'Grenade', closeName: 'هراوة 👮', closeShort: 'هراوة 👮', rangedTheme: 'bg-blue-950/90 border-blue-400 text-blue-100 shadow-[0_0_14px_rgba(37,99,235,0.45)]' };
+      case 'goro':
+        return { rangedName: 'نار غورو 👹', rangedSub: 'Fire', closeName: 'سحق 👊', closeShort: 'سحق 👊', rangedTheme: 'bg-amber-950/90 border-amber-400 text-amber-100 shadow-[0_0_14px_rgba(180,83,9,0.45)]' };
+      case 'kintaro':
+        return { rangedName: 'نار النمر 🐯', rangedSub: 'Flames', closeName: 'دوسة 🦶', closeShort: 'دوسة 🦶', rangedTheme: 'bg-red-950/90 border-red-400 text-red-100 shadow-[0_0_14px_rgba(220,38,38,0.45)]' };
+      case 'shaokahn':
+        return { rangedName: 'مطرقة كان 🔨', rangedSub: 'Hammer', closeName: 'دفعة كتف 💪', closeShort: 'كتف 💪', rangedTheme: 'bg-amber-950/90 border-yellow-400 text-yellow-100 shadow-[0_0_14px_rgba(245,158,11,0.45)]' };
     }
   };
 

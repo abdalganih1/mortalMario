@@ -59,8 +59,8 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
           </p>
         </div>
 
-        {/* Fighter Cards — swipe carousel on mobile, scrollable grid on desktop */}
-        <div className="flex sm:grid sm:grid-cols-3 gap-2.5 sm:gap-3 overflow-x-auto sm:overflow-y-auto sm:overflow-x-hidden sm:max-h-[46vh] snap-x snap-mandatory sm:snap-none pb-2 sm:pb-1 -mx-1 px-1">
+        {/* Fighter Cards — swipe carousel on mobile, fixed-height scroll grid on desktop (never squashed) */}
+        <div className="flex sm:grid sm:grid-cols-3 shrink-0 gap-2.5 sm:gap-3 overflow-x-auto sm:overflow-y-auto sm:overflow-x-hidden h-[172px] sm:h-[46vh] snap-x snap-mandatory sm:snap-none pb-2 sm:pb-1 -mx-1 px-1">
           {fighters.map(fighter => {
             const isSelected = effectiveFighter === fighter.id;
             const locked = !isFighterUnlocked(fighter.id);

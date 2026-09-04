@@ -201,6 +201,22 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       johnnycage: 'sonya',
       jax: 'johnnycage',
       sonya: 'jax',
+      kano: 'jax',
+      jade: 'kitana',
+      mileena: 'jade',
+      ermac: 'shangtsung',
+      smoke: 'noob',
+      rain: 'raiden',
+      sindel: 'sonya',
+      nightwolf: 'liukang',
+      kabal: 'kano',
+      sheeva: 'goro',
+      quanchi: 'shangtsung',
+      fujin: 'raiden',
+      striker: 'kabal',
+      goro: 'kintaro',
+      kintaro: 'goro',
+      shaokahn: 'liukang',
     };
     const assignedRival = rivalMap[playerChar] || 'scorpion';
 
@@ -1053,6 +1069,106 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           alpha: 1,
           scale: 1.2,
         });
+      } else {
+        // EXPANDED ROSTER special-1: data-driven (projectile or point-blank AoE)
+        interface S1Def {
+          proj?: Projectile['type'];
+          dmg: number;
+          spd: number;
+          w: number;
+          h: number;
+          vy?: number;
+          grav?: number;
+          low?: boolean;
+          shots?: number;
+          aoe?: number;
+          text: string;
+          color: string;
+          sfx: 'fan' | 'bolt' | 'boom' | 'zap' | 'shadow';
+        }
+        const S1: Record<string, S1Def> = {
+          kano: { proj: 'kano_knife', dmg: 26, spd: 7.5, w: 26, h: 18, text: 'KNIFE THROW! 🔪', color: '#ef4444', sfx: 'fan' },
+          jade: { proj: 'jade_rang', dmg: 26, spd: 7.0, w: 28, h: 18, text: 'RAZOR RANG! 🪃', color: '#10b981', sfx: 'fan' },
+          mileena: { proj: 'mileena_sai', dmg: 24, spd: 8.0, w: 22, h: 16, shots: 2, text: 'SAI TOSS! 👄', color: '#ec4899', sfx: 'fan' },
+          ermac: { aoe: 80, dmg: 3, spd: 0, w: 0, h: 0, text: 'MIND SLAM! 🔴', color: '#dc2626', sfx: 'shadow' },
+          smoke: { aoe: 70, dmg: 2, spd: 0, w: 0, h: 0, text: 'SMOKE BOMB! 💨', color: '#9ca3af', sfx: 'shadow' },
+          rain: { proj: 'rain_ball', dmg: 26, spd: 7.2, w: 24, h: 24, text: 'WATER BALL! 🌧️', color: '#0ea5e9', sfx: 'zap' },
+          sindel: { proj: 'shockwave', dmg: 30, spd: 6.0, w: 34, h: 26, low: true, text: 'BANSHEE WAVE! 📢', color: '#c084fc', sfx: 'boom' },
+          nightwolf: { proj: 'wolf_arrow', dmg: 26, spd: 8.5, w: 26, h: 12, text: 'SPIRIT ARROW! 🐺', color: '#a16207', sfx: 'fan' },
+          kabal: { proj: 'blade_spark', dmg: 26, spd: 8.2, w: 26, h: 18, text: 'BUZZSAW! 🌪️', color: '#78716c', sfx: 'fan' },
+          sheeva: { proj: 'dragon_fire', dmg: 30, spd: 6.8, w: 28, h: 22, text: 'FIRE SPIT! 🔥', color: '#ea580c', sfx: 'boom' },
+          quanchi: { proj: 'soul_skull', dmg: 28, spd: 6.4, w: 28, h: 26, text: 'DARK SKULL! 🔮', color: '#65a30d', sfx: 'shadow' },
+          fujin: { proj: 'fujin_wind', dmg: 24, spd: 8.0, w: 28, h: 20, text: 'WIND BLAST! 🌪️', color: '#e2e8f0', sfx: 'zap' },
+          striker: { proj: 'striker_nade', dmg: 30, spd: 6.0, w: 20, h: 20, vy: -4, grav: 0.3, text: 'GRENADE! 🚔', color: '#2563eb', sfx: 'boom' },
+          goro: { proj: 'dragon_fire', dmg: 30, spd: 6.5, w: 30, h: 24, text: 'SHOKAN FIRE! 👹', color: '#b45309', sfx: 'boom' },
+          kintaro: { proj: 'dragon_fire', dmg: 28, spd: 7.0, w: 28, h: 22, text: 'TIGER FLAMES! 🐯', color: '#dc2626', sfx: 'boom' },
+          shaokahn: { proj: 'hammer', dmg: 32, spd: 6.2, w: 30, h: 26, text: 'HAMMER TOSS! 🔨', color: '#f59e0b', sfx: 'boom' },
+        };
+        const def = S1[p.character];
+        if (def) {
+          if (def.sfx === 'fan') soundManager.playFanThrow();
+          else if (def.sfx === 'bolt') soundManager.playForceball();
+          else if (def.sfx === 'boom') soundManager.playBlockHit();
+          else if (def.sfx === 'zap') soundManager.playLightning();
+          else soundManager.playShadowClone();
+          if (def.proj) {
+            const n = def.shots || 1;
+            for (let s = 0; s < n; s++) {
+              projectilesRef.current.push({
+                id: Math.random(),
+                type: def.proj,
+                x: p.facing === 'right' ? p.x + p.width + 5 : p.x - def.w - 5,
+                y: (def.low ? p.y + p.height - def.h : p.y + 14) - s * 14,
+                vx: p.facing === 'right' ? def.spd : -def.spd,
+                vy: def.vy || 0,
+                width: def.w,
+                height: def.h,
+                damage: def.dmg,
+                owner: 'player',
+                duration: 3.2,
+                active: true,
+                facing: p.facing,
+                ...(def.grav ? { grav: def.grav } : {}),
+              });
+            }
+          } else if (def.aoe) {
+            // Point-blank AoE burst (Ermac slam / Smoke bomb)
+            screenShakeRef.current = 7;
+            enemiesRef.current.forEach(e => {
+              if (e.isAlive && Math.abs(e.x - p.x) < def.aoe && Math.abs(e.y - p.y) < 60) {
+                applyDamageToEnemy(e, def.dmg, 'uppercut');
+                if (e.isAlive) {
+                  e.vy = -8;
+                  e.vx = p.facing === 'right' ? 3 : -3;
+                }
+              }
+            });
+            for (let i = 0; i < 12; i++) {
+              particlesRef.current.push({
+                id: Math.random(),
+                x: p.x + p.width / 2,
+                y: p.y + p.height / 2,
+                vx: (Math.random() - 0.5) * 7,
+                vy: (Math.random() - 0.5) * 7,
+                color: def.color,
+                size: Math.random() * 8 + 4,
+                alpha: 1,
+                decay: 0.04,
+                shape: 'smoke',
+              });
+            }
+          }
+          floatingTextsRef.current.push({
+            id: Math.random(),
+            text: def.text,
+            x: p.x + p.width / 2,
+            y: p.y - 12,
+            vy: -1.5,
+            color: def.color,
+            alpha: 1,
+            scale: 1.2,
+          });
+        }
       }
     } else if (type === 'special2') {
       // SPECIAL 2 (close): unlocks at stage 5!
@@ -1497,6 +1613,112 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             }
           }
         });
+      } else {
+        // EXPANDED ROSTER special-2: data-driven finishers
+        interface S2Def {
+          kind: 'dash' | 'lift' | 'teleport' | 'dizzy' | 'quake' | 'multi';
+          dmg: number;
+          vx?: number;
+          vy?: number;
+          radius?: number;
+          shake?: number;
+          text: string;
+          color: string;
+          sfx: 'fan' | 'punch' | 'upper' | 'shadow' | 'torp';
+        }
+        const S2: Record<string, S2Def> = {
+          kano: { kind: 'dash', dmg: 3, vx: 9.5, text: 'CANNONBALL! 👁️', color: '#ef4444', sfx: 'fan' },
+          jade: { kind: 'teleport', dmg: 3, text: 'VANISH KICK! 🪃', color: '#10b981', sfx: 'shadow' },
+          mileena: { kind: 'dash', dmg: 3, vx: 10, text: 'RAVENOUS RUSH! 👄', color: '#ec4899', sfx: 'fan' },
+          ermac: { kind: 'teleport', dmg: 3, text: 'SOUL TELEPORT! 🔴', color: '#dc2626', sfx: 'shadow' },
+          smoke: { kind: 'dash', dmg: 2, vx: 10.5, text: 'SMOKE DASH! 💨', color: '#9ca3af', sfx: 'shadow' },
+          rain: { kind: 'lift', dmg: 3, radius: 80, text: 'GEYSER BURST! 🌧️', color: '#0ea5e9', sfx: 'upper' },
+          sindel: { kind: 'lift', dmg: 3, radius: 85, text: 'HAIR WHIP! 📢', color: '#c084fc', sfx: 'upper' },
+          nightwolf: { kind: 'dash', dmg: 3, vx: 10, vy: -2, text: 'TOMAHAWK! 🐺', color: '#a16207', sfx: 'torp' },
+          kabal: { kind: 'dash', dmg: 2, vx: 12.5, text: 'NOMAD DASH! 🌪️', color: '#78716c', sfx: 'fan' },
+          sheeva: { kind: 'quake', dmg: 3, radius: 90, shake: 9, text: 'QUAKE POUND! 🔥', color: '#ea580c', sfx: 'punch' },
+          quanchi: { kind: 'dizzy', dmg: 1, radius: 90, text: 'MIND TRANCE! 🔮', color: '#65a30d', sfx: 'shadow' },
+          fujin: { kind: 'dash', dmg: 2, vx: 10.5, vy: -2, text: 'SKY KICK! 🌪️', color: '#e2e8f0', sfx: 'torp' },
+          striker: { kind: 'multi', dmg: 2, text: 'BATON RUSH! 🚔', color: '#2563eb', sfx: 'punch' },
+          goro: { kind: 'quake', dmg: 4, radius: 100, shake: 10, text: 'FOUR-ARM CRUSH! 👹', color: '#b45309', sfx: 'punch' },
+          kintaro: { kind: 'teleport', dmg: 3, text: 'STOMP TELEPORT! 🐯', color: '#dc2626', sfx: 'shadow' },
+          shaokahn: { kind: 'dash', dmg: 4, vx: 9, shake: 10, text: 'SHOULDER CHARGE! 🔨', color: '#f59e0b', sfx: 'punch' },
+        };
+        const d2 = S2[p.character];
+        if (d2) {
+          if (d2.sfx === 'fan') soundManager.playFanThrow();
+          else if (d2.sfx === 'punch') soundManager.playPunch();
+          else if (d2.sfx === 'upper') soundManager.playUppercut();
+          else if (d2.sfx === 'torp') soundManager.playTorpedo();
+          else soundManager.playShadowClone();
+          screenShakeRef.current = Math.max(screenShakeRef.current, d2.shake || 8);
+          if (d2.kind === 'dash') {
+            p.isDashing = true;
+            p.dashTimer = 0.5;
+            p.isInvincible = true;
+            p.invincibleTimer = 0.55;
+            p.vx = p.facing === 'right' ? (d2.vx || 9) : -(d2.vx || 9);
+            if (d2.vy) p.vy = d2.vy;
+            enemiesRef.current.forEach(e => {
+              if (e.isAlive && Math.abs(e.x - p.x) < 85 && Math.abs(e.y - p.y) < 52) {
+                applyDamageToEnemy(e, d2.dmg, 'blades');
+              }
+            });
+          } else if (d2.kind === 'teleport') {
+            p.x += p.facing === 'right' ? 110 : -110;
+            p.vx = p.facing === 'right' ? 3 : -3;
+            p.isInvincible = true;
+            p.invincibleTimer = 0.4;
+            enemiesRef.current.forEach(e => {
+              if (e.isAlive && Math.abs(e.x - p.x) < 70 && Math.abs(e.y - p.y) < 50) {
+                applyDamageToEnemy(e, d2.dmg, 'fire');
+              }
+            });
+          } else if (d2.kind === 'lift' || d2.kind === 'quake') {
+            enemiesRef.current.forEach(e => {
+              if (e.isAlive && Math.abs(e.x - p.x) < (d2.radius || 80) && Math.abs(e.y - p.y) < 60) {
+                applyDamageToEnemy(e, d2.dmg, 'uppercut');
+                if (e.isAlive) {
+                  e.vy = d2.kind === 'lift' ? -9.5 : -5;
+                  e.vx = p.facing === 'right' ? 3 : -3;
+                }
+              }
+            });
+          } else if (d2.kind === 'dizzy') {
+            enemiesRef.current.forEach(e => {
+              if (e.isAlive && Math.abs(e.x - p.x) < (d2.radius || 90) && Math.abs(e.y - p.y) < 60) {
+                applyDamageToEnemy(e, d2.dmg, 'dizzy');
+                if (e.isAlive && (e.type === 'kombatant' || e.type === 'fighter_boss' || e.type === 'rival_ninja' || e.type === 'bowser')) {
+                  e.isDizzy = true;
+                  e.dizzyTimer = 3.0;
+                }
+              }
+            });
+            soundManager.playDizzy();
+          } else if (d2.kind === 'multi') {
+            p.isDashing = true;
+            p.dashTimer = 0.45;
+            p.isInvincible = true;
+            p.invincibleTimer = 0.5;
+            p.vx = p.facing === 'right' ? 8 : -8;
+            enemiesRef.current.forEach(e => {
+              if (e.isAlive && Math.abs(e.x - p.x) < 80 && Math.abs(e.y - p.y) < 50) {
+                applyDamageToEnemy(e, d2.dmg, 'punch');
+                applyDamageToEnemy(e, 1, 'punch');
+              }
+            });
+          }
+          floatingTextsRef.current.push({
+            id: Math.random(),
+            text: d2.text,
+            x: p.x,
+            y: p.y - 14,
+            vy: -1.6,
+            color: d2.color,
+            alpha: 1,
+            scale: 1.4,
+          });
+        }
       }
     }
   };
@@ -2589,6 +2811,22 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             johnnycage: 'cage_bolt',
             jax: 'shockwave',
             sonya: 'energy_ring',
+            kano: 'kano_knife',
+            jade: 'jade_rang',
+            mileena: 'mileena_sai',
+            ermac: 'soul_skull',
+            smoke: 'shadow_ball',
+            rain: 'rain_ball',
+            sindel: 'shockwave',
+            nightwolf: 'wolf_arrow',
+            kabal: 'blade_spark',
+            sheeva: 'dragon_fire',
+            quanchi: 'soul_skull',
+            fujin: 'fujin_wind',
+            striker: 'striker_nade',
+            goro: 'dragon_fire',
+            kintaro: 'dragon_fire',
+            shaokahn: 'hammer',
             subzero: 'ice_blast',
             scorpion: 'spear',
             raiden: 'lightning',
@@ -3337,6 +3575,20 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         SpriteRenderer.drawRing(ctx, proj);
       } else if (proj.type === 'hammer') {
         SpriteRenderer.drawHammer(ctx, proj);
+      } else if (proj.type === 'kano_knife') {
+        SpriteRenderer.drawKnife(ctx, proj);
+      } else if (proj.type === 'jade_rang') {
+        SpriteRenderer.drawRang(ctx, proj);
+      } else if (proj.type === 'mileena_sai') {
+        SpriteRenderer.drawSai(ctx, proj);
+      } else if (proj.type === 'rain_ball') {
+        SpriteRenderer.drawRain(ctx, proj);
+      } else if (proj.type === 'wolf_arrow') {
+        SpriteRenderer.drawArrow(ctx, proj);
+      } else if (proj.type === 'fujin_wind') {
+        SpriteRenderer.drawWind(ctx, proj);
+      } else if (proj.type === 'striker_nade') {
+        SpriteRenderer.drawGrenade(ctx, proj);
       } else if (proj.type === 'shadow_ball') {
         // NOOB SAIBOT DARK VORTEX
         ctx.save();

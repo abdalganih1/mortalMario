@@ -604,7 +604,7 @@ function buildClassicLevels(): LevelData[] {
     pit: 'الحفرة',
     netherrealm: 'العالم السفلي',
   };
-  const gruntKinds = ['baraka', 'liukang', 'kitana', 'shangtsung', 'kunglao', 'johnnycage', 'jax', 'sonya'] as const;
+  const gruntKinds = ['baraka', 'liukang', 'kitana', 'shangtsung', 'kunglao', 'johnnycage', 'jax', 'sonya', 'kano', 'jade', 'mileena', 'ermac', 'smoke', 'rain', 'sindel', 'nightwolf', 'kabal', 'sheeva', 'quanchi', 'fujin', 'striker', 'goro', 'kintaro', 'shaokahn'] as const;
   const rivalKinds = ['subzero', 'scorpion', 'noob', 'raiden', 'reptile', 'baraka', 'liukang', 'kitana', 'kunglao', 'shangtsung'] as const;
   const TOTAL = 92;
 
