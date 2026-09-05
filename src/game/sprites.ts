@@ -1,4 +1,5 @@
 import { FighterId, Player, Enemy, Projectile, Block, Item, Particle } from '../types';
+import { FIGHTER_ART, FighterArt } from './characters';
 
 export class SpriteRenderer {
   // Draw Mortal Kombat Ninjas with authentic retro digitized pixel arcade aesthetic
@@ -8,6 +9,9 @@ export class SpriteRenderer {
     if (player.facing === 'left') {
       ctx.scale(-1, 1);
     }
+    // BIG mushroom size: scale the whole rig (feet stay planted)
+    const sizeK = (player.height || 48) / 48;
+    ctx.scale(sizeK, sizeK);
 
     // Invincibility flicker
     if (player.isInvincible && Math.floor(player.invincibleTimer * 10) % 2 === 0) {
@@ -21,55 +25,12 @@ export class SpriteRenderer {
     }
 
     const { character, isAttacking, attackType, isGrounded, isDashing, isSliding, walkCycle } = player;
+    const isBlocking = player.isBlocking;
+    const isCrouching = player.isCrouching;
+    const crouchUppercut = player.crouchUppercut;
 
-    // Palette per character
-    const palette = {
-      subzero: {
-        skin: '#e0b296',
-        cowl: '#0a0a14',
-        armor: '#00d2ff',
-        armorDark: '#0088cc',
-        pants: '#121218',
-        eyes: '#ffffff',
-        aura: 'rgba(0, 210, 255, 0.4)',
-      },
-      scorpion: {
-        skin: '#d49b7b',
-        cowl: '#14110b',
-        armor: '#ffb300',
-        armorDark: '#c68400',
-        pants: '#181510',
-        eyes: '#ffffff',
-        aura: 'rgba(255, 120, 0, 0.4)',
-      },
-      noob: {
-        skin: '#09090b',
-        cowl: '#030305',
-        armor: '#18181b',
-        armorDark: '#09090b',
-        pants: '#050508',
-        eyes: '#ffffff',
-        aura: 'rgba(124, 58, 237, 0.5)',
-      },
-      raiden: {
-        skin: '#f5d0b5',
-        cowl: '#e2e8f0',
-        armor: '#38bdf8',
-        armorDark: '#0284c7',
-        pants: '#f8fafc',
-        eyes: '#38bdf8',
-        aura: 'rgba(56, 189, 248, 0.5)',
-      },
-      reptile: {
-        skin: '#4ade80',
-        cowl: '#052e16',
-        armor: '#22c55e',
-        armorDark: '#15803d',
-        pants: '#0f172a',
-        eyes: '#facc15',
-        aura: 'rgba(34, 197, 94, 0.45)',
-      },
-    }[character];
+    // Shared art direction: one palette per fighter (29 kombatants)
+    const palette: FighterArt = FIGHTER_ART[character];
 
     // Flower powerup glow
     if (player.powerUp === 'flower') {
@@ -181,177 +142,582 @@ export class SpriteRenderer {
       return;
     }
 
-    // Animation cycle offsets
+    // --- CLASSIC MK CROUCH UPPERCUT: ducked low, fist launched skyward ---
+    if (crouchUppercut && isAttacking) {
+      // Ducked thighs
+      ctx.fillStyle = palette.pants;
+      ctx.fillRect(-14, -14, 14, 10);
+      ctx.fillRect(0, -14, 14, 10);
+      // Boots planted wide
+      ctx.fillStyle = palette.cowl;
+      ctx.fillRect(-17, -6, 13, 6);
+      ctx.fillRect(4, -6, 13, 6);
+      // Hunched torso
+      ctx.fillStyle = palette.cowl;
+      ctx.fillRect(-10, -30, 20, 18);
+      // Chest straps
+      ctx.fillStyle = palette.armor;
+      ctx.beginPath();
+      ctx.moveTo(-10, -30);
+      ctx.lineTo(-4, -30);
+      ctx.lineTo(-2, -16);
+      ctx.lineTo(-7, -16);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(10, -30);
+      ctx.lineTo(4, -30);
+      ctx.lineTo(2, -16);
+      ctx.lineTo(7, -16);
+      ctx.closePath();
+      ctx.fill();
+      // Belt
+      ctx.fillStyle = palette.armorDark;
+      ctx.fillRect(-9, -18, 18, 4);
+      // THE RISING FIST: arm shot straight up past the head
+      ctx.fillStyle = palette.cowl;
+      ctx.fillRect(3, -58, 8, 32);
+      ctx.fillStyle = palette.armor;
+      ctx.fillRect(2, -52, 10, 8);
+      ctx.fillStyle = palette.skin;
+      ctx.fillRect(1, -67, 12, 10);
+      // Impact flash at the fist
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#f59e0b';
+      ctx.beginPath();
+      ctx.moveTo(7, -72);
+      ctx.lineTo(7, -78);
+      ctx.moveTo(0, -69);
+      ctx.lineTo(-4, -73);
+      ctx.moveTo(14, -69);
+      ctx.lineTo(18, -73);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      // Back arm tucked low
+      ctx.fillStyle = palette.skin;
+      ctx.fillRect(-14, -26, 6, 8);
+      // Head ducked under the punch
+      ctx.fillStyle = palette.cowl;
+      ctx.beginPath();
+      ctx.arc(-2, -36, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = palette.skin;
+      ctx.fillRect(-6, -40, 10, 5);
+      ctx.fillStyle = palette.armor;
+      ctx.fillRect(-7, -36, 11, 7);
+      ctx.fillStyle = palette.eyes;
+      ctx.fillRect(-1, -39, 3, 2);
+
+      ctx.restore();
+      return;
+    }
+
+    // --- MK DEFENSE STANCE: braced legs, crossed arms, guard shield ---
+    if (isBlocking) {
+      // Braced legs
+      ctx.fillStyle = palette.pants;
+      ctx.fillRect(-13, -16, 9, 16);
+      ctx.fillRect(4, -16, 9, 16);
+      ctx.fillStyle = palette.cowl;
+      ctx.fillRect(-14, -4, 11, 4);
+      ctx.fillRect(3, -4, 11, 4);
+      // Torso
+      ctx.fillStyle = palette.cowl;
+      ctx.fillRect(-10, -32, 20, 18);
+      ctx.fillStyle = palette.armor;
+      ctx.fillRect(-10, -32, 20, 5);
+      // Crossed guard arms
+      ctx.fillStyle = palette.skin;
+      ctx.fillRect(-12, -28, 24, 5);
+      ctx.fillRect(-12, -22, 24, 5);
+      ctx.fillStyle = palette.armor;
+      ctx.fillRect(-4, -29, 8, 12);
+      // Head steady behind guard
+      ctx.fillStyle = palette.cowl;
+      ctx.beginPath();
+      ctx.arc(0, -38, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = palette.skin;
+      ctx.fillRect(-4, -42, 10, 5);
+      ctx.fillStyle = palette.armor;
+      ctx.fillRect(-5, -38, 11, 7);
+      ctx.fillStyle = palette.eyes;
+      ctx.fillRect(1, -41, 3, 2);
+      // Guard shield arc
+      ctx.strokeStyle = 'rgba(147, 197, 253, 0.9)';
+      ctx.lineWidth = 3;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = '#60a5fa';
+      ctx.beginPath();
+      ctx.arc(2, -20, 25, -Math.PI * 0.72, Math.PI * 0.22);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      ctx.restore();
+      return;
+    }
+
+    // ============ MK2 RIG: digitized arcade fighter, heavy ink + shading ============
     const isMoving = Math.abs(player.vx) > 0.5;
     const bounce = isGrounded && !isMoving ? Math.sin(Date.now() / 180) * 1.5 : 0;
     const legSwing = isMoving && isGrounded ? Math.sin(walkCycle * 0.4) * 6 : 0;
+    const armSwing = isMoving && isGrounded ? Math.sin(walkCycle * 0.4 + Math.PI) * 5 : 0;
 
     const w = 32;
     const h = 48;
     const topY = -h + bounce;
+    const INK = '#050508';
 
-    // Aura/smoke for Noob Saibot or Sub-Zero
-    if (character === 'noob') {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-      ctx.beginPath();
-      ctx.ellipse(0, topY + 24, 20, 26, 0, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (character === 'subzero') {
-      ctx.fillStyle = 'rgba(0, 220, 255, 0.15)';
-      ctx.beginPath();
-      ctx.ellipse(0, topY + 24, 18, 24, 0, 0, Math.PI * 2);
-      ctx.fill();
+    // Crouch idle: squash the whole rig toward the feet (stays planted)
+    if (isCrouching && !isAttacking) {
+      ctx.scale(1, 0.66);
     }
 
-    // --- LEGS & BOOTS ---
+    // Fighter aura
+    ctx.fillStyle = palette.aura;
+    ctx.beginPath();
+    ctx.ellipse(0, topY + 24, 19, 25, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ground shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath();
+    ctx.ellipse(0, 1, 15, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const outline = (x: number, y: number, ww: number, hh: number) => {
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(x, y, ww, hh);
+    };
+
+    // ---- LEGS: baggy MK pants, wrapped shins, heavy boots ----
+    // Back leg
     ctx.fillStyle = palette.pants;
-    // Left leg
-    ctx.fillRect(-11, topY + 30, 8, 16 + (isMoving ? legSwing : 0));
-    // Right leg
-    ctx.fillRect(3, topY + 30, 8, 16 - (isMoving ? legSwing : 0));
-
-    // Shin guards / Ninja wraps
+    ctx.fillRect(-12, topY + 29, 9, 15 + (isMoving ? legSwing * 0.6 : 0));
+    outline(-12, topY + 29, 9, 15 + (isMoving ? legSwing * 0.6 : 0));
+    // Front leg
+    ctx.fillStyle = palette.pants;
+    ctx.fillRect(3, topY + 29, 9, 15 - (isMoving ? legSwing * 0.6 : 0));
+    outline(3, topY + 29, 9, 15 - (isMoving ? legSwing * 0.6 : 0));
+    // Knee shading
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(-12, topY + 34, 9, 3);
+    ctx.fillRect(3, topY + 34, 9, 3);
+    // Shin wraps
     ctx.fillStyle = palette.armor;
-    ctx.fillRect(-11, topY + 36, 8, 8);
-    ctx.fillRect(3, topY + 36, 8, 8);
-
-    // Boots
-    ctx.fillStyle = palette.cowl;
-    ctx.fillRect(-12, topY + 44, 9, 4);
-    ctx.fillRect(2, topY + 44, 9, 4);
-
-    // --- TORSO & GI ---
-    // Inner black shirt
-    ctx.fillStyle = palette.cowl;
-    ctx.fillRect(-10, topY + 16, 20, 16);
-
-    // Ninja V-shaped tabard armor (Mortal Kombat icon)
-    ctx.fillStyle = palette.armor;
-    // Left strap
-    ctx.beginPath();
-    ctx.moveTo(-10, topY + 16);
-    ctx.lineTo(-4, topY + 16);
-    ctx.lineTo(-2, topY + 30);
-    ctx.lineTo(-7, topY + 30);
-    ctx.closePath();
-    ctx.fill();
-
-    // Right strap
-    ctx.beginPath();
-    ctx.moveTo(10, topY + 16);
-    ctx.lineTo(4, topY + 16);
-    ctx.lineTo(2, topY + 30);
-    ctx.lineTo(7, topY + 30);
-    ctx.closePath();
-    ctx.fill();
-
-    // Ninja belt / Sash
+    ctx.fillRect(-12, topY + 38, 9, 6);
+    ctx.fillRect(3, topY + 38, 9, 6);
     ctx.fillStyle = palette.armorDark;
-    ctx.fillRect(-9, topY + 28, 18, 4);
+    ctx.fillRect(-12, topY + 41, 9, 2);
+    ctx.fillRect(3, topY + 41, 2, 2);
+    ctx.fillRect(8, topY + 41, 4, 2);
+    // Heavy boots + shine
+    ctx.fillStyle = palette.cowl;
+    ctx.fillRect(-13, topY + 44, 11, 4);
+    ctx.fillRect(2, topY + 44, 11, 4);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fillRect(-13, topY + 44, 11, 1);
+    ctx.fillRect(2, topY + 44, 11, 1);
 
-    // --- ARMS & ATTACKS ---
+    // ---- TORSO: bare MK chest, muscle shading, vest panels ----
+    // Chest base
+    ctx.fillStyle = palette.skin;
+    ctx.fillRect(-10, topY + 15, 20, 15);
+    outline(-10, topY + 15, 20, 15);
+    // Pec shading
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.fillRect(-9, topY + 19, 8, 2);
+    ctx.fillRect(1, topY + 19, 8, 2);
+    // Abs
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(-4, topY + 23, 8, 1.6);
+    ctx.fillRect(-4, topY + 26, 8, 1.6);
+    // Chest highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(-9, topY + 16, 4, 12);
+    // Vest side panels (fighter color)
+    ctx.fillStyle = palette.armor;
+    ctx.fillRect(-10, topY + 15, 4, 15);
+    ctx.fillRect(6, topY + 15, 4, 15);
+    ctx.fillStyle = palette.armorDark;
+    ctx.fillRect(-10, topY + 15, 1.6, 15);
+    ctx.fillRect(8.4, topY + 15, 1.6, 15);
+    // Sash belt + knot
+    ctx.fillStyle = palette.armorDark;
+    ctx.fillRect(-10, topY + 28, 20, 4);
+    ctx.fillStyle = INK;
+    ctx.fillRect(-10, topY + 28, 20, 1);
+    ctx.fillStyle = palette.armor;
+    ctx.fillRect(6, topY + 30, 6, 5);
+
+    // ---- ARMS ----
+    const drawFist = (x: number, y: number, s: number) => {
+      ctx.fillStyle = palette.skin;
+      ctx.fillRect(x, y, s, s);
+      outline(x, y, s, s);
+    };
     if (isAttacking) {
       if (attackType === 'uppercut') {
-        // High rising mortal kombat uppercut fist
-        ctx.fillStyle = palette.cowl;
-        ctx.fillRect(4, topY - 2, 7, 18);
+        // MK rising uppercut: rear fist launched past the head
+        ctx.fillStyle = palette.skin;
+        ctx.fillRect(3, topY - 4, 8, 20);
+        outline(3, topY - 4, 8, 20);
         ctx.fillStyle = palette.armor;
-        ctx.fillRect(4, topY - 8, 8, 8);
-        ctx.fillStyle = palette.skin;
-        ctx.fillRect(3, topY - 14, 10, 8);
-
-        // Back arm pulled back
-        ctx.fillStyle = palette.skin;
-        ctx.fillRect(-12, topY + 20, 6, 8);
-      } else if (attackType === 'punch' || attackType === 'special1' || attackType === 'special2') {
-        // Extended punch arm
+        ctx.fillRect(2, topY - 10, 10, 7);
+        drawFist(1, topY - 17, 11);
+        // Back arm chambered low
         ctx.fillStyle = palette.cowl;
-        ctx.fillRect(2, topY + 16, 16, 6);
-        // Forearm / wrap
+        ctx.fillRect(-13, topY + 20, 7, 9);
+        drawFist(-13, topY + 27, 7);
+      } else {
+        // Straight punch / specials: lead arm extended
+        ctx.fillStyle = palette.skin;
+        ctx.fillRect(2, topY + 16, 15, 7);
+        outline(2, topY + 16, 15, 7);
         ctx.fillStyle = palette.armor;
-        ctx.fillRect(10, topY + 15, 8, 8);
-        // Fist
-        ctx.fillStyle = palette.skin;
-        ctx.fillRect(18, topY + 14, 8, 10);
-
-        // Back arm in guard
-        ctx.fillStyle = palette.skin;
-        ctx.fillRect(-12, topY + 18, 6, 8);
+        ctx.fillRect(9, topY + 15, 9, 9);
+        drawFist(17, topY + 14, 9);
+        // Rear guard fist
+        ctx.fillStyle = palette.cowl;
+        ctx.fillRect(-13, topY + 18, 6, 8);
+        drawFist(-13, topY + 16, 7);
       }
     } else if (isDashing) {
-      // Dashing forward sprint arms
+      // Sprint: arms swept back
       ctx.fillStyle = palette.armor;
-      ctx.fillRect(-12, topY + 14, 6, 14);
-      ctx.fillRect(6, topY + 14, 12, 6);
+      ctx.fillRect(-14, topY + 14, 7, 14);
+      ctx.fillRect(5, topY + 15, 13, 6);
+      drawFist(-15, topY + 24, 7);
+      drawFist(16, topY + 14, 7);
     } else {
-      // Classic Mortal Kombat idle guard stance
-      // Back arm
+      // MK guard stance (+ run swing)
+      // Rear arm
       ctx.fillStyle = palette.skin;
-      ctx.fillRect(-12, topY + 18, 6, 9);
+      ctx.fillRect(-13, topY + 18 + (isMoving ? -armSwing * 0.4 : 0), 6, 9);
       ctx.fillStyle = palette.armor;
-      ctx.fillRect(-12, topY + 21, 6, 5);
-
-      // Lead arm raised in combat guard
+      ctx.fillRect(-13, topY + 21 + (isMoving ? -armSwing * 0.4 : 0), 6, 5);
+      drawFist(-13, topY + 16 + (isMoving ? -armSwing * 0.4 : 0), 6);
+      // Lead guard fist high
       ctx.fillStyle = palette.cowl;
-      ctx.fillRect(4, topY + 17, 6, 8);
+      ctx.fillRect(4, topY + 17 + (isMoving ? armSwing * 0.4 : 0), 6, 8);
       ctx.fillStyle = palette.armor;
-      ctx.fillRect(6, topY + 14, 7, 6);
-      ctx.fillStyle = palette.skin;
-      ctx.fillRect(10, topY + 10, 6, 6);
+      ctx.fillRect(5, topY + 14 + (isMoving ? armSwing * 0.4 : 0), 8, 6);
+      drawFist(9, topY + 9 + (isMoving ? armSwing * 0.4 : 0), 7);
     }
 
-    // --- HEAD, MASK & HOOD ---
-    // Ninja Hood / Cowl
+    // Baraka: Tarkatan blades on BOTH forearms, always out
+    if (character === 'baraka') {
+      ctx.fillStyle = '#e2e8f0';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 1;
+      const blade = (bx: number, by: number, dir: number) => {
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(bx + dir * 16, by - 5);
+        ctx.lineTo(bx + dir * 13, by + 1);
+        ctx.lineTo(bx + dir * 16, by + 7);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      };
+      blade(10, topY + 16, 1);
+      blade(-11, topY + 20, -1);
+    }
+    // Jax: full metal arms
+    if (character === 'jax') {
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(-13, topY + 16, 7, 13);
+      ctx.fillRect(4, topY + 15, 8, 10);
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(-13, topY + 20, 7, 2);
+      ctx.fillRect(4, topY + 19, 8, 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.fillRect(-12, topY + 16, 2, 13);
+    }
+
+    // ---- HEAD: hood, masculine jaw, brow, fighter eyes ----
+    // Hood mass
     ctx.fillStyle = palette.cowl;
     ctx.beginPath();
-    ctx.arc(0, topY + 8, 9, 0, Math.PI * 2);
+    ctx.arc(0, topY + 7, 10, 0, Math.PI * 2);
     ctx.fill();
-
-    // Face cutout / Eyes
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+    // Jaw (wide, masculine)
     ctx.fillStyle = palette.skin;
-    ctx.fillRect(-4, topY + 4, 10, 5);
-
-    // Ninja Mask
+    ctx.fillRect(-6, topY + 4, 13, 8);
+    outline(-6, topY + 4, 13, 8);
+    // Heavy brow shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(-6, topY + 4, 13, 2.4);
+    // Mask band
     ctx.fillStyle = palette.armor;
-    ctx.fillRect(-5, topY + 8, 11, 7);
+    ctx.fillRect(-6, topY + 9, 13, 5);
     ctx.fillStyle = palette.armorDark;
-    ctx.fillRect(-3, topY + 11, 7, 2);
+    ctx.fillRect(-6, topY + 12.5, 13, 1.5);
 
-    // Glowing Eyes
-    ctx.fillStyle = palette.eyes;
-    ctx.fillRect(1, topY + 5, 3, 2);
-    if (character === 'noob') {
-      // Eerie white glowing slit eyes for Noob Saibot
+    // Eyes per fighter
+    const eyeWhite = (x: number, y: number, ww: number, glow?: string) => {
+      if (glow) {
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = glow;
+      }
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x, y, ww, 2.4);
+      ctx.shadowBlur = 0;
+    };
+    if (character === 'baraka') {
+      // Burning red slits + Tarkatan fangs (pure menace, no softness)
       ctx.shadowBlur = 8;
-      ctx.shadowColor = '#ffffff';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(1, topY + 5, 4, 2);
+      ctx.shadowColor = '#ef4444';
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(0, topY + 5.5, 7, 2.4);
       ctx.shadowBlur = 0;
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(-4, topY + 12, 3, 4);
+      ctx.fillRect(5, topY + 12, 3, 4);
+      // Head spikes
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(-3, topY - 5, 3, 5);
+      ctx.fillRect(3, topY - 5, 3, 5);
+    } else if (character === 'shangtsung') {
+      // Sickly green sorcerer eyes + long dark beard
+      eyeWhite(0, topY + 5.5, 7, '#4ade80');
+      ctx.fillStyle = '#4ade80';
+      ctx.fillRect(1, topY + 5.5, 2, 2.4);
+      ctx.fillRect(4, topY + 5.5, 2, 2.4);
+      ctx.fillStyle = '#1c0f2e';
+      ctx.fillRect(-3, topY + 14, 9, 9);
+      ctx.fillStyle = 'rgba(74,222,128,0.5)';
+      ctx.fillRect(-1, topY + 16, 2, 5);
+      ctx.fillRect(3, topY + 16, 2, 5);
+    } else if (character === 'reptile') {
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(0, topY + 5.5, 7, 2.4);
+      ctx.fillStyle = '#052e16';
+      ctx.fillRect(3, topY + 5.5, 1.4, 2.4);
+    } else if (character === 'noob') {
+      eyeWhite(0, topY + 5.5, 8, '#ffffff');
     } else if (character === 'raiden') {
-      // Electric glowing cyan eyes
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = '#38bdf8';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(1, topY + 5, 4, 2);
-      ctx.shadowBlur = 0;
+      eyeWhite(0, topY + 5.5, 7, '#38bdf8');
+    } else if (character === 'kitana' || character === 'sonya') {
+      eyeWhite(0, topY + 5.5, 6);
+      ctx.fillStyle = INK;
+      ctx.fillRect(3, topY + 5.5, 1.4, 2.4);
+    } else {
+      eyeWhite(0, topY + 5.5, 6);
+    }
 
-      // Raiden's Iconic Conical Straw Hat
+    // Headgear per fighter
+    if (character === 'raiden') {
+      // Iconic conical straw hat
       ctx.fillStyle = '#d97706';
       ctx.beginPath();
-      ctx.moveTo(0, topY - 8);
-      ctx.lineTo(18, topY + 4);
-      ctx.lineTo(-18, topY + 4);
+      ctx.moveTo(0, topY - 9);
+      ctx.lineTo(19, topY + 3);
+      ctx.lineTo(-19, topY + 3);
       ctx.closePath();
       ctx.fill();
       ctx.strokeStyle = '#92400e';
       ctx.lineWidth = 1.5;
       ctx.stroke();
-    } else if (character === 'reptile') {
-      // Reptilian yellow-gold slit eye
-      ctx.fillStyle = '#facc15';
-      ctx.fillRect(1, topY + 5, 3, 2);
-      ctx.fillStyle = '#052e16';
-      ctx.fillRect(2, topY + 5, 1, 2);
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(-16, topY + 1, 32, 1.6);
+    } else if (character === 'kunglao') {
+      // Wide bladed hat (abu el tagiyeh!) with steel rim
+      ctx.fillStyle = '#1a1408';
+      ctx.beginPath();
+      ctx.ellipse(0, topY - 2, 17, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#eab308';
+      ctx.beginPath();
+      ctx.arc(0, topY - 4, 6, Math.PI, 0);
+      ctx.fill();
+    } else if (character === 'liukang') {
+      // Shaolin headband, tails flying
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(-10, topY - 1, 20, 3.4);
+      ctx.fillRect(-16, topY, 6, 2.4);
+      ctx.fillRect(-18, topY + 2, 4, 8);
+    } else if (character === 'johnnycage') {
+      // HOLLYWOOD STAR: black hair (no ninja cowl!), big dark sunglasses with shine
+      ctx.fillStyle = '#3b2a1a';
+      ctx.fillRect(-8, topY - 6, 16, 6);
+      ctx.fillRect(-8, topY - 6, 3, 10);
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(-7, topY + 4, 15, 5);
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(-1, topY + 5.5, 2, 2.4);
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillRect(-5, topY + 4.6, 4, 1.6);
+      ctx.fillRect(3, topY + 4.6, 3, 1.6);
+      // Smug grin
+      ctx.fillStyle = '#7c2d12';
+      ctx.fillRect(-3, topY + 12, 7, 1.8);
+      // Open white shirt + red pants vibe on torso
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(-9, topY + 18, 4, 12);
+      ctx.fillRect(5, topY + 18, 4, 12);
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(-5, topY + 26, 10, 4);
+    } else if (character === 'sonya') {
+      // High ponytail
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(-13, topY - 6, 5, 12);
+      ctx.fillRect(-15, topY + 4, 9, 3);
+    } else if (character === 'kitana') {
+      // Steel fan folded at hip
+      ctx.strokeStyle = '#bfdbfe';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(-11, topY + 26, 6, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = '#60a5fa';
+      for (let f = 0; f < 5; f++) {
+        const fa = (f / 5) * Math.PI * 2 + Date.now() / 900;
+        ctx.fillRect(-11 + Math.cos(fa) * 4, topY + 26 + Math.sin(fa) * 4, 2, 2);
+      }
+    } else if (character === 'jax') {
+      // Military beret
+      ctx.fillStyle = '#14532d';
+      ctx.beginPath();
+      ctx.ellipse(1, topY - 2, 9, 4, -0.15, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (character === 'kano') {
+      // Cybernetic red eye plate
+      ctx.fillStyle = '#1f2937';
+      ctx.fillRect(-2, topY + 2, 11, 7);
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = '#ef4444';
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(3, topY + 5.5, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    } else if (character === 'jade') {
+      // Edenian face paint + ponytail
+      ctx.fillStyle = '#065f46';
+      ctx.fillRect(-6, topY + 4, 3, 8);
+      ctx.fillStyle = '#134e4a';
+      ctx.fillRect(-12, topY - 4, 4, 10);
+    } else if (character === 'mileena') {
+      // Tarkatan fangs + wild hair
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(-5, topY + 12, 3, 4);
+      ctx.fillRect(0, topY + 12, 3, 4);
+      ctx.fillRect(5, topY + 12, 3, 4);
+      ctx.fillStyle = '#831843';
+      ctx.fillRect(-11, topY - 4, 5, 12);
+      ctx.fillRect(6, topY - 4, 5, 12);
+    } else if (character === 'ermac') {
+      // Burning soul-eyes + dark wisps
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#f87171';
+      ctx.fillStyle = '#f87171';
+      ctx.fillRect(0, topY + 5.5, 7, 2.4);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(220,38,38,0.5)';
+      ctx.fillRect(-12, topY + 10, 3, 12);
+    } else if (character === 'smoke') {
+      // Living smoke wisps
+      ctx.fillStyle = 'rgba(156,163,175,0.6)';
+      ctx.fillRect(-13, topY + 8, 4, 14);
+      ctx.fillRect(9, topY + 12, 4, 10);
+    } else if (character === 'rain') {
+      // Storm circlet
+      ctx.fillStyle = '#0ea5e9';
+      ctx.fillRect(-9, topY - 1, 18, 2.6);
+      ctx.fillStyle = '#bae6fd';
+      ctx.fillRect(-2, topY - 4, 4, 4);
+    } else if (character === 'sindel') {
+      // Flowing silver mane
+      ctx.fillStyle = '#e9d5ff';
+      ctx.fillRect(-13, topY - 6, 5, 20);
+      ctx.fillRect(8, topY - 6, 5, 20);
+      ctx.fillStyle = '#a855f7';
+      ctx.fillRect(-13, topY + 12, 5, 2);
+      ctx.fillRect(8, topY + 12, 5, 2);
+    } else if (character === 'nightwolf') {
+      // Feather + war paint
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(-4, topY - 8, 3, 8);
+      ctx.fillStyle = '#a16207';
+      ctx.fillRect(-6, topY + 6, 3, 6);
+      ctx.fillRect(4, topY + 6, 3, 6);
+    } else if (character === 'kabal') {
+      // Respirator mask + scarred eye
+      ctx.fillStyle = '#292524';
+      ctx.fillRect(-6, topY + 9, 13, 5);
+      ctx.fillStyle = '#78716c';
+      ctx.fillRect(-4, topY + 10, 3, 3);
+      ctx.fillRect(1, topY + 10, 3, 3);
+    } else if (character === 'sheeva' || character === 'goro') {
+      // FOUR ARMS: extra pair stacked below
+      ctx.fillStyle = palette.skin;
+      ctx.fillRect(-13, topY + 26, 6, 8);
+      ctx.fillRect(7, topY + 26, 6, 8);
+      drawFist(-13, topY + 32, 7);
+      drawFist(6, topY + 32, 7);
+      if (character === 'goro') {
+        // Shokan topknot + shoulder spikes
+        ctx.fillStyle = '#170c06';
+        ctx.fillRect(-2, topY - 8, 4, 8);
+        ctx.fillStyle = '#78716c';
+        ctx.beginPath();
+        ctx.moveTo(-12, topY + 16);
+        ctx.lineTo(-17, topY + 8);
+        ctx.lineTo(-9, topY + 12);
+        ctx.closePath();
+        ctx.fill();
+      }
+    } else if (character === 'quanchi') {
+      // Brow amulet + pale rune
+      ctx.fillStyle = '#bef264';
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = '#65a30d';
+      ctx.fillRect(-1, topY - 1, 5, 3);
+      ctx.shadowBlur = 0;
+    } else if (character === 'fujin') {
+      // Wind topknot + sash tails
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-2, topY - 8, 4, 7);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(-14, topY + 28, 6, 2);
+    } else if (character === 'striker') {
+      // Riot cap + badge
+      ctx.fillStyle = '#1e3a8a';
+      ctx.fillRect(-9, topY - 3, 18, 4);
+      ctx.fillRect(4, topY - 6, 6, 4);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(-8, topY + 20, 4, 4);
+    } else if (character === 'kintaro') {
+      // Tiger stripes + fangs
+      ctx.fillStyle = '#450a0a';
+      ctx.fillRect(-8, topY - 2, 3, 6);
+      ctx.fillRect(-2, topY - 2, 3, 6);
+      ctx.fillRect(4, topY - 2, 3, 6);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(-4, topY + 12, 3, 4);
+      ctx.fillRect(3, topY + 12, 3, 4);
+    } else if (character === 'shaokahn') {
+      // Skull war-helmet + war paint
+      ctx.fillStyle = '#292524';
+      ctx.beginPath();
+      ctx.arc(0, topY - 1, 11, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(-8, topY - 4, 4, 6);
+      ctx.fillRect(4, topY - 4, 4, 6);
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(-6, topY + 6, 2, 6);
+      ctx.fillRect(4, topY + 6, 2, 6);
     }
 
     ctx.restore();
@@ -568,7 +934,370 @@ export class SpriteRenderer {
     ctx.restore();
   }
 
-  // Draw Mario Enemies: Goomba, Koopa, Piranha, BOWSER Boss, and RIVAL NINJA Boss
+  // Draw Baraka's spinning Blade Spark
+  // Draw Baraka's spinning Blade Spark
+  static drawBlade(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    ctx.translate(proj.x + proj.width / 2, proj.y + proj.height / 2);
+    ctx.rotate(Date.now() / 80);
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#f43f5e';
+    ctx.fillStyle = '#e2e8f0';
+    for (let b = 0; b < 3; b++) {
+      ctx.rotate((Math.PI * 2) / 3);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(14, -3);
+      ctx.lineTo(14, 3);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.fillStyle = '#881337';
+    ctx.beginPath();
+    ctx.arc(0, 0, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Draw Liu Kang's Dragon Fireball
+  static drawDragonFire(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    const cx = proj.x + proj.width / 2;
+    const cy = proj.y + proj.height / 2;
+    ctx.shadowBlur = 16;
+    ctx.shadowColor = '#f97316';
+    ctx.fillStyle = '#f97316';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.arc(cx + (proj.facing === 'right' ? 3 : -3), cy, 4, 0, Math.PI * 2);
+    ctx.fill();
+    // Dragon whiskers
+    ctx.strokeStyle = '#fdba74';
+    ctx.lineWidth = 2;
+    const wob = Math.sin(Date.now() / 60) * 3;
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, cy - 4);
+    ctx.quadraticCurveTo(cx - 18, cy - 8 + wob, cx - 24, cy - 4 + wob);
+    ctx.moveTo(cx - 10, cy + 4);
+    ctx.quadraticCurveTo(cx - 18, cy + 8 - wob, cx - 24, cy + 4 - wob);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Draw Kitana's spinning Steel Fan
+  static drawFan(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    ctx.translate(proj.x + proj.width / 2, proj.y + proj.height / 2);
+    ctx.rotate(Date.now() / 70);
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#60a5fa';
+    ctx.fillStyle = '#bfdbfe';
+    for (let b = 0; b < 5; b++) {
+      ctx.rotate((Math.PI * 2) / 5);
+      ctx.fillRect(0, -12, 5, 12);
+    }
+    ctx.fillStyle = '#1e3a8a';
+    ctx.beginPath();
+    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#dbeafe';
+    ctx.beginPath();
+    ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Draw Shang Tsung's Soul Skull
+  static drawSkull(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    const cx = proj.x + proj.width / 2;
+    const cy = proj.y + proj.height / 2;
+    const bob = Math.sin(Date.now() / 100) * 2;
+    ctx.shadowBlur = 16;
+    ctx.shadowColor = '#a855f7';
+    // Skull dome
+    ctx.fillStyle = '#e9d5ff';
+    ctx.beginPath();
+    ctx.arc(cx, cy - 2 + bob, 10, Math.PI, 0);
+    ctx.fill();
+    ctx.fillRect(cx - 10, cy - 2 + bob, 20, 8);
+    // Jaw teeth
+    ctx.fillStyle = '#a855f7';
+    for (let t = -2; t <= 2; t++) {
+      ctx.fillRect(cx + t * 4 - 1, cy + 6 + bob, 2, 4);
+    }
+    // Burning green eyes
+    ctx.fillStyle = '#4ade80';
+    ctx.shadowColor = '#4ade80';
+    ctx.fillRect(cx - 7, cy - 4 + bob, 5, 5);
+    ctx.fillRect(cx + 2, cy - 4 + bob, 5, 5);
+    ctx.restore();
+  }
+
+  // Draw Kung Lao's spinning Razor Hat
+  static drawHat(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    ctx.translate(proj.x + proj.width / 2, proj.y + proj.height / 2);
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#eab308';
+    // Wide hat disc
+    ctx.fillStyle = '#1a1408';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 15, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Spinning steel rim
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([6, 4]);
+    ctx.lineDashOffset = -Date.now() / 20;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 15, 6, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#eab308';
+    ctx.beginPath();
+    ctx.arc(0, -2, 5, Math.PI, 0);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Draw Johnny Cage's green Forceball Bolt
+  static drawBolt(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    const cx = proj.x + proj.width / 2;
+    const cy = proj.y + proj.height / 2;
+    ctx.shadowBlur = 16;
+    ctx.shadowColor = '#4ade80';
+    ctx.fillStyle = '#14532d';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#4ade80';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 7 + Math.sin(Date.now() / 70) * 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#d1fae5';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Draw Jax's ground Shockwave
+  static drawWave(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    const cx = proj.x + proj.width / 2;
+    const cy = proj.y + proj.height / 2;
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = '#94a3b8';
+    for (let i = 0; i < 3; i++) {
+      ctx.strokeStyle = i === 1 ? '#e2e8f0' : '#64748b';
+      ctx.lineWidth = 4 - i;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 8 + i * 7 + Math.sin(Date.now() / 60) * 2, 10 - i * 2, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Draw Sonya's Energy Ring
+  static drawRing(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    ctx.translate(proj.x + proj.width / 2, proj.y + proj.height / 2);
+    ctx.rotate(Date.now() / 90);
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = '#f472b6';
+    ctx.strokeStyle = '#f9a8d4';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(0, 0, 9, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = '#fce7f3';
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(Math.cos(a) * 9, Math.sin(a) * 9, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // Draw Hammer Bro's spinning hammer
+  static drawHammer(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    ctx.translate(proj.x + proj.width / 2, proj.y + proj.height / 2);
+    ctx.rotate(Date.now() / 60);
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = '#9ca3af';
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(-2, -11, 4, 22);
+    ctx.fillStyle = '#9ca3af';
+    ctx.fillRect(-9, -14, 18, 7);
+    ctx.strokeStyle = '#374151';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(-9, -14, 18, 7);
+    ctx.restore();
+  }
+
+  // Draw Kano's spinning combat knife
+  static drawKnife(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    ctx.translate(proj.x + proj.width / 2, proj.y + proj.height / 2);
+    ctx.rotate(Date.now() / 70);
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#ef4444';
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(-13, -2.5, 26, 5);
+    ctx.beginPath();
+    ctx.moveTo(13, -4);
+    ctx.lineTo(19, 0);
+    ctx.lineTo(13, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#7f1d1d';
+    ctx.fillRect(-3, -5, 6, 10);
+    ctx.restore();
+  }
+
+  // Draw Jade's razor boomerang
+  static drawRang(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    ctx.translate(proj.x + proj.width / 2, proj.y + proj.height / 2);
+    ctx.rotate(Date.now() / 60);
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#10b981';
+    ctx.strokeStyle = '#a7f3d0';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0.3, Math.PI - 0.3);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, Math.PI + 0.3, -0.3);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Draw Mileena's sai daggers
+  static drawSai(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    ctx.translate(proj.x + proj.width / 2, proj.y + proj.height / 2);
+    ctx.rotate((proj.facing === 'right' ? 1 : -1) * Date.now() / 80);
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#ec4899';
+    ctx.fillStyle = '#f9a8d4';
+    ctx.fillRect(-11, -2, 22, 4);
+    ctx.beginPath();
+    ctx.moveTo(11, -3.5);
+    ctx.lineTo(17, 0);
+    ctx.lineTo(11, 3.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#831843';
+    ctx.fillRect(-2, -6, 4, 12);
+    ctx.restore();
+  }
+
+  // Draw Rain's pressurized water ball
+  static drawRain(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    const cx = proj.x + proj.width / 2;
+    const cy = proj.y + proj.height / 2;
+    ctx.shadowBlur = 16;
+    ctx.shadowColor = '#0ea5e9';
+    ctx.fillStyle = '#0c4a6e';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(cx - 2, cy - 2, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#e0f2fe';
+    ctx.beginPath();
+    ctx.arc(cx - 4, cy - 4, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Draw Nightwolf's spirit arrow
+  static drawArrow(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    ctx.translate(proj.x + proj.width / 2, proj.y + proj.height / 2);
+    if (proj.facing === 'left') ctx.scale(-1, 1);
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#fef08a';
+    ctx.strokeStyle = '#a16207';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-12, 0);
+    ctx.lineTo(8, 0);
+    ctx.stroke();
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.moveTo(8, -4);
+    ctx.lineTo(15, 0);
+    ctx.lineTo(8, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#fef3c7';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-12, 0);
+    ctx.lineTo(-16, -4);
+    ctx.moveTo(-12, 0);
+    ctx.lineTo(-16, 4);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Draw Fujin's wind blast
+  static drawWind(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    const cx = proj.x + proj.width / 2;
+    const cy = proj.y + proj.height / 2;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#e2e8f0';
+    ctx.strokeStyle = '#f1f5f9';
+    ctx.lineWidth = 3;
+    const wob = Math.sin(Date.now() / 60) * 3;
+    for (let i = -1; i <= 1; i++) {
+      ctx.beginPath();
+      ctx.moveTo(cx - 14, cy + i * 7);
+      ctx.quadraticCurveTo(cx, cy + i * 7 + wob, cx + 14, cy + i * 7 - wob);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Draw Stryker's grenade (blinking!)
+  static drawGrenade(ctx: CanvasRenderingContext2D, proj: Projectile) {
+    ctx.save();
+    const cx = proj.x + proj.width / 2;
+    const cy = proj.y + proj.height / 2;
+    const blink = Math.sin(Date.now() / 80) > 0;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = blink ? '#ef4444' : '#2563eb';
+    ctx.fillStyle = '#1f2937';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = blink ? '#ef4444' : '#60a5fa';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#9ca3af';
+    ctx.fillRect(cx - 2, cy - 13, 4, 5);
+    ctx.restore();
+  }
+
+  // Draw Enemies: Goomba, Koopa, Piranha, Bowser, Rival Ninja, Kombatants, Fighter Bosses
   static drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy) {
     if (!enemy.isAlive) return;
 
@@ -627,8 +1356,37 @@ export class SpriteRenderer {
       ctx.fillRect(3, topY + 5, 7, 2);
 
     } else if (type === 'koopa') {
-      // --- KOOPA TROOPA ---
+      // --- KOOPA TROOPA (or hiding shell!) ---
       const walk = Math.sin(Date.now() / 150) * 3;
+
+      if (enemy.inShell) {
+        // Hiding shell: white-rimmed dome, eyes peeking (SAFE to touch!)
+        const shk = enemy.shellVx ? Math.sin(Date.now() / 60) * 1.5 : 0;
+        ctx.fillStyle = isFrozen ? '#00b4d8' : '#16a34a';
+        ctx.beginPath();
+        ctx.arc(shk, topY + 20, 13, Math.PI, 0);
+        ctx.fill();
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = isFrozen ? '#90e0ef' : '#bbf7d0';
+        ctx.fillRect(-13 + shk, topY + 20, 26, 4);
+        // Peeking eyes
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(-5 + shk, topY + 14, 3, 3);
+        ctx.fillRect(2 + shk, topY + 14, 3, 3);
+        if (enemy.shellVx) {
+          // Speed lines on a racing shell
+          ctx.strokeStyle = '#fef08a';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(-20, topY + 16);
+          ctx.lineTo(-30, topY + 16);
+          ctx.moveTo(-20, topY + 24);
+          ctx.lineTo(-30, topY + 24);
+          ctx.stroke();
+        }
+      } else {
 
       // Green Spiked Shell
       ctx.fillStyle = isFrozen ? '#00b4d8' : '#16a34a';
@@ -654,6 +1412,77 @@ export class SpriteRenderer {
       ctx.fillStyle = isFrozen ? '#0077b6' : '#ea580c';
       ctx.fillRect(-10 + walk, topY + 30, 8, 6);
       ctx.fillRect(2 - walk, topY + 30, 8, 6);
+      }
+
+    } else if (type === 'hammerbro') {
+      // --- HAMMER BRO: armored turtle bruiser with helmet + hammer ---
+      const hWalk = Math.sin(Date.now() / 140 + enemy.id) * 2;
+      // Stompy boots
+      ctx.fillStyle = isFrozen ? '#0077b6' : '#7c2d12';
+      ctx.fillRect(-11 + hWalk, topY + 30, 9, 12);
+      ctx.fillRect(2 - hWalk, topY + 30, 9, 12);
+      // Bulky green body
+      ctx.fillStyle = isFrozen ? '#00b4d8' : '#15803d';
+      ctx.beginPath();
+      ctx.arc(0, topY + 22, 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#052e16';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      // Belly plate
+      ctx.fillStyle = isFrozen ? '#90e0ef' : '#fef3c7';
+      ctx.fillRect(-8, topY + 22, 16, 10);
+      // Helmet
+      ctx.fillStyle = isFrozen ? '#0077b6' : '#1f2937';
+      ctx.beginPath();
+      ctx.arc(0, topY + 8, 10, Math.PI, 0);
+      ctx.fill();
+      ctx.fillRect(-10, topY + 8, 20, 3);
+      // Angry eyes under brim
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-6, topY + 10, 5, 4);
+      ctx.fillRect(1, topY + 10, 5, 4);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(-4, topY + 11, 2, 2);
+      ctx.fillRect(3, topY + 11, 2, 2);
+      // Raised hammer (wind-up when attacking)
+      const raise = enemy.attackTimer && enemy.attackTimer > 1.6 ? -8 : 0;
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(10, topY + 8 + raise, 4, 12);
+      ctx.fillStyle = '#9ca3af';
+      ctx.fillRect(4, topY + 4 + raise, 16, 7);
+      ctx.strokeStyle = '#374151';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(4, topY + 4 + raise, 16, 7);
+
+    } else if (type === 'spiny') {
+      // --- SPINY: spiked ball of pain — NEVER stomp it! ---
+      const sRoll = Math.sin(Date.now() / 120 + enemy.id) * 2;
+      // Red scuttle feet
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(-9 + sRoll, topY + 26, 7, 6);
+      ctx.fillRect(2 - sRoll, topY + 26, 7, 6);
+      // Dark spiked dome
+      ctx.fillStyle = isFrozen ? '#00b4d8' : '#1f2937';
+      ctx.beginPath();
+      ctx.arc(0, topY + 20, 13, Math.PI, 0);
+      ctx.fill();
+      ctx.fillRect(-13, topY + 20, 26, 8);
+      // White spikes
+      ctx.fillStyle = '#f8fafc';
+      const spikes: [number, number][] = [[-9, 8], [-4, 4], [1, 4], [6, 8], [-6, 14], [4, 14]];
+      spikes.forEach(([sx, sy]) => {
+        ctx.beginPath();
+        ctx.moveTo(sx - 3, topY + sy + 4);
+        ctx.lineTo(sx, topY + sy - 3);
+        ctx.lineTo(sx + 3, topY + sy + 4);
+        ctx.closePath();
+        ctx.fill();
+      });
+      // Mean red eyes
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(-6, topY + 20, 4, 3);
+      ctx.fillRect(2, topY + 20, 4, 3);
 
     } else if (type === 'piranha') {
       // --- PIRANHA PLANT ---
@@ -795,15 +1624,8 @@ export class SpriteRenderer {
       }
     } else if (type === 'rival_ninja') {
       // --- RIVAL MORTAL KOMBAT NINJA BOSS ---
-      const rivalId = enemy.rivalFighter || 'scorpion';
-      const palettes: Record<string, { armor: string; armorDark: string; cowl: string; pants: string; eyes: string }> = {
-        subzero: { armor: '#00d2ff', armorDark: '#0088cc', cowl: '#0a0a14', pants: '#121218', eyes: '#ffffff' },
-        scorpion: { armor: '#ffb300', armorDark: '#c68400', cowl: '#14110b', pants: '#181510', eyes: '#ffffff' },
-        noob: { armor: '#18181b', armorDark: '#09090b', cowl: '#030305', pants: '#050508', eyes: '#ffffff' },
-        raiden: { armor: '#38bdf8', armorDark: '#0284c7', cowl: '#f8fafc', pants: '#e2e8f0', eyes: '#38bdf8' },
-        reptile: { armor: '#22c55e', armorDark: '#15803d', cowl: '#052e16', pants: '#0f172a', eyes: '#facc15' },
-      };
-      const pal = palettes[rivalId] || palettes.scorpion;
+      const rivalId = enemy.fighterKind || 'scorpion';
+      const pal: FighterArt = FIGHTER_ART[rivalId as FighterId] || FIGHTER_ART.scorpion;
 
       const idleBreathing = Math.sin(Date.now() / 160) * 1.5;
 
@@ -892,6 +1714,137 @@ export class SpriteRenderer {
       ctx.font = 'bold 8px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(rivalId.toUpperCase(), 0, topY - 16);
+    } else if (type === 'kombatant' || type === 'fighter_boss') {
+      // --- MK FIGHTER GRUNT / FIGHTER BOSS (Baraka, Liu Kang, Kitana, Shang Tsung...) ---
+      const kindId = enemy.fighterKind || 'baraka';
+      const isFBoss = type === 'fighter_boss';
+      const kpal: FighterArt = FIGHTER_ART[kindId as FighterId] || FIGHTER_ART.baraka;
+      if (isFBoss) ctx.scale(1.25, 1.25);
+
+      const kBreath = Math.sin(Date.now() / 160 + enemy.id) * 1.5;
+
+      // Boss aura
+      if (isFBoss) {
+        ctx.shadowBlur = 16;
+        ctx.shadowColor = enemy.health < enemy.maxHealth / 2 ? '#ef4444' : kpal.armor;
+      } else {
+        ctx.shadowBlur = isFrozen ? 14 : 8;
+        ctx.shadowColor = isFrozen ? '#00f0ff' : kpal.armor;
+      }
+
+      // Legs / Boots
+      ctx.fillStyle = isFrozen ? '#0077b6' : kpal.pants;
+      ctx.fillRect(-10, topY + 30, 8, 18);
+      ctx.fillRect(2, topY + 30, 8, 18);
+
+      // Torso
+      ctx.fillStyle = isFrozen ? '#90e0ef' : kpal.cowl;
+      ctx.fillRect(-10, topY + 12 + kBreath, 20, 20);
+
+      // V armor
+      ctx.fillStyle = isFrozen ? '#00b4d8' : kpal.armor;
+      ctx.beginPath();
+      ctx.moveTo(-10, topY + 12 + kBreath);
+      ctx.lineTo(-4, topY + 28 + kBreath);
+      ctx.lineTo(4, topY + 28 + kBreath);
+      ctx.lineTo(10, topY + 12 + kBreath);
+      ctx.closePath();
+      ctx.fill();
+
+      // Belt
+      ctx.fillStyle = kpal.armorDark;
+      ctx.fillRect(-10, topY + 28 + kBreath, 20, 4);
+
+      // Arms: melee strike / guard / block shimmer
+      if (enemy.attackTimer && enemy.attackTimer > 0) {
+        ctx.fillStyle = kpal.cowl;
+        ctx.fillRect(2, topY + 16, 18, 6);
+        ctx.fillStyle = kpal.armor;
+        ctx.fillRect(12, topY + 15, 8, 8);
+        ctx.fillStyle = kpal.eyes;
+        ctx.fillRect(20, topY + 16, 4, 6);
+      } else {
+        ctx.fillStyle = kpal.cowl;
+        ctx.fillRect(4, topY + 16, 6, 8);
+        ctx.fillStyle = kpal.armor;
+        ctx.fillRect(6, topY + 14, 7, 6);
+      }
+      if (enemy.enemyBlockTimer && enemy.enemyBlockTimer > 0) {
+        ctx.strokeStyle = 'rgba(147, 197, 253, 0.95)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(4, topY + 24, 16, -Math.PI * 0.6, Math.PI * 0.4);
+        ctx.stroke();
+      }
+
+      // Baraka blades on fists
+      if (kindId === 'baraka') {
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.moveTo(8, topY + 16);
+        ctx.lineTo(20, topY + 10);
+        ctx.lineTo(18, topY + 16);
+        ctx.lineTo(20, topY + 22);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Head
+      ctx.fillStyle = isFrozen ? '#0077b6' : kpal.cowl;
+      ctx.beginPath();
+      ctx.arc(0, topY + 8 + kBreath, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = isFrozen ? '#00b4d8' : kpal.armor;
+      ctx.fillRect(-5, topY + 8 + kBreath, 11, 7);
+      ctx.fillStyle = kpal.eyes;
+      ctx.fillRect(1, topY + 5 + kBreath, 3, 2);
+
+      // Boss crown
+      if (isFBoss) {
+        ctx.fillStyle = '#fbbf24';
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#fbbf24';
+        for (let s = -1; s <= 1; s++) {
+          ctx.fillRect(s * 7 - 2, topY - 8 + kBreath, 4, 7);
+        }
+        ctx.fillRect(-11, topY - 2 + kBreath, 22, 3);
+        ctx.shadowBlur = 0;
+      }
+
+      // HP bar + name
+      const kBarW = isFBoss ? 56 : 36;
+      const kBarH = 5;
+      const kPct = Math.max(0, enemy.health / enemy.maxHealth);
+      ctx.fillStyle = '#18181b';
+      ctx.fillRect(-kBarW / 2 - 1, topY - 16, kBarW + 2, kBarH + 2);
+      ctx.fillStyle = kPct > 0.4 ? kpal.armor : '#ef4444';
+      ctx.fillRect(-kBarW / 2, topY - 15, kBarW * kPct, kBarH);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = isFBoss ? '#fbbf24' : '#f8fafc';
+      ctx.font = isFBoss ? 'bold 9px monospace' : 'bold 7px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText((isFBoss ? '★ ' : '') + kindId.toUpperCase(), 0, topY - 18);
+      if (isFBoss) ctx.scale(0.8, 0.8);
+    }
+
+    // DIZZY STARS: swirling above any dizzied enemy head
+    if (enemy.isDizzy) {
+      const t = Date.now() / 150;
+      ctx.shadowBlur = 6;
+      ctx.shadowColor = '#fbbf24';
+      ctx.fillStyle = '#fde047';
+      for (let s = 0; s < 3; s++) {
+        const a = t + (s * Math.PI * 2) / 3;
+        const sx = Math.cos(a) * 13;
+        const sy = -height - 14 + Math.sin(a) * 4;
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(a);
+        ctx.fillRect(-3.5, -1, 7, 2);
+        ctx.fillRect(-1, -3.5, 2, 7);
+        ctx.restore();
+      }
+      ctx.shadowBlur = 0;
     }
 
     ctx.restore();
@@ -1006,6 +1959,23 @@ export class SpriteRenderer {
       ctx.strokeStyle = '#052e16';
       ctx.lineWidth = 2;
       ctx.strokeRect(block.x, y, block.width, block.height);
+
+      // Warp pipe cue: glowing ▼ arrow beckoning the player to dive in
+      if (block.isWarp) {
+        const pulse = Math.sin(Date.now() / 300) * 3;
+        ctx.save();
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = '#4ade80';
+        ctx.fillStyle = '#fef08a';
+        ctx.font = 'bold 17px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('▼', block.x + block.width / 2, y - 8 + pulse);
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#4ade80';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(block.x - 1, y - 1, block.width + 2, block.height + 2);
+        ctx.restore();
+      }
     } else if (block.type === 'bridge') {
       // Castle Chain Bridge over lava
       ctx.fillStyle = '#92400e';

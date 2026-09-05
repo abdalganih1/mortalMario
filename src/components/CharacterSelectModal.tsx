@@ -1,6 +1,6 @@
 import React from 'react';
 import { FighterId } from '../types';
-import { FIGHTERS } from '../game/characters';
+import { FIGHTERS, FIGHTER_UNLOCK, FIGHTER_TRAITS, isFighterUnlocked } from '../game/characters';
 import { soundManager } from '../audio/soundEffects';
 
 interface CharacterSelectModalProps {
@@ -9,6 +9,7 @@ interface CharacterSelectModalProps {
   onStartGame: () => void;
   isOpen: boolean;
   onOpenGuide?: () => void;
+  onOpenStages?: () => void;
 }
 
 export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
@@ -17,19 +18,27 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
   onStartGame,
   isOpen,
   onOpenGuide,
+  onOpenStages,
 }) => {
   if (!isOpen) return null;
 
   const fighters = Object.values(FIGHTERS);
-  const current = FIGHTERS[selectedFighter];
+  // Never show a locked fighter as selected
+  const effectiveFighter = isFighterUnlocked(selectedFighter) ? selectedFighter : 'subzero';
+  const current = FIGHTERS[effectiveFighter];
 
   const handlePick = (id: FighterId) => {
+    if (!isFighterUnlocked(id)) {
+      soundManager.playError();
+      return;
+    }
     soundManager.playPunch();
     onSelectFighter(id);
   };
 
   const handleConfirm = () => {
     soundManager.playDash();
+    if (effectiveFighter !== selectedFighter) onSelectFighter(effectiveFighter);
     onStartGame();
   };
 
@@ -37,7 +46,7 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-md select-none overflow-y-auto">
       <div
         id="character-select-box"
-        className="w-full max-w-3xl bg-neutral-950 border-2 border-red-800/80 rounded-2xl shadow-2xl p-5 sm:p-7 flex flex-col gap-6 text-neutral-100"
+        className="w-full max-w-3xl max-h-[94vh] overflow-y-auto bg-neutral-950 border-2 border-red-800/80 rounded-2xl shadow-2xl p-4 sm:p-7 flex flex-col gap-4 sm:gap-6 text-neutral-100"
       >
         {/* Title */}
         <div className="text-center space-y-1">
@@ -48,21 +57,25 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
             اختر مقاتلك للمغامرة
           </h1>
           <p className="text-xs text-neutral-400">
-            تم تحديث مقاتلي مورتال كومبات بأحدث الحركات والرسوميات الكلاسيكية
+            اسحب أفقياً لتصفح المقاتلين الـ29 👉 المقفل ينفتح بالترتيب: كل مرحلة تكسبها تفتح المقاتل التالي!
           </p>
         </div>
 
-        {/* Fighter Cards Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
-          {fighters.map(fighter => {
-            const isSelected = selectedFighter === fighter.id;
+        {/* Fighter Cards — swipe carousel on mobile, fixed-height scroll grid on desktop (never squashed) */}
+        <div className="flex sm:grid sm:grid-cols-3 landscape:grid-cols-4 shrink-0 gap-2.5 sm:gap-3 overflow-x-auto sm:overflow-y-auto sm:overflow-x-hidden h-[172px] sm:h-[42vh] landscape:h-[38vh] snap-x snap-mandatory sm:snap-none pb-2 sm:pb-1 -mx-1 px-1">
+          {fighters.map((fighter, fi) => {
+            const isSelected = effectiveFighter === fighter.id;
+            const locked = !isFighterUnlocked(fighter.id);
             return (
               <button
                 key={fighter.id}
                 id={`select-fighter-${fighter.id}`}
                 onClick={() => handlePick(fighter.id)}
-                className={`group relative p-4 rounded-xl border-2 text-right transition-all flex flex-col justify-between overflow-hidden ${
-                  isSelected
+                disabled={locked}
+                className={`group relative p-3 sm:p-4 rounded-xl border-2 text-right transition-all flex flex-col justify-between overflow-hidden snap-center shrink-0 w-[68vw] max-w-[240px] sm:w-auto sm:max-w-none min-h-[150px] sm:min-h-[132px] ${
+                  locked
+                    ? 'border-neutral-800 bg-neutral-950/80 opacity-50 saturate-0 cursor-not-allowed'
+                    : isSelected
                     ? 'border-red-500 bg-neutral-900 shadow-[0_0_20px_rgba(239,68,68,0.3)] scale-[1.02]'
                     : 'border-neutral-800 bg-neutral-900/60 hover:border-neutral-700 hover:bg-neutral-900/90 opacity-80'
                 }`}
@@ -75,7 +88,7 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl">{fighter.avatar}</span>
+                    <span className="text-2xl">{locked ? '🔒' : fighter.avatar}</span>
                     <span
                       className="text-xs font-mono font-black uppercase px-2 py-0.5 rounded-full"
                       style={{
@@ -97,10 +110,10 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                 {/* Special move highlight */}
                 <div className="mt-4 pt-3 border-t border-neutral-800 space-y-1">
                   <span className="text-[10px] font-bold text-amber-400 block">
-                    {fighter.id === 'noob' ? '✨ حركة محدثة:' : 'المهارة الرئيسية:'}
+                    {locked ? '🔒 ترتيب الفتح:' : 'الكومبو القاضي:'}
                   </span>
                   <span className="text-xs font-bold text-neutral-200 block truncate">
-                    {fighter.special1Name}
+                    {locked ? `المقاتل رقم ${fi + 1} — يفتح بالمرحلة ${FIGHTER_UNLOCK[fighter.id] + 1} 🏆` : FIGHTER_TRAITS[fighter.id].combo}
                   </span>
                 </div>
               </button>
@@ -129,6 +142,18 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
             {current.description}
           </p>
 
+          <div className="bg-amber-950/50 border border-amber-700/60 p-3 rounded-lg space-y-1">
+            <span className="text-[11px] font-black text-amber-300 block">
+              ⚡ ميزة {current.nameAr}: {FIGHTER_TRAITS[current.id].combo}
+            </span>
+            <p className="text-xs text-amber-100/90 leading-normal">
+              {FIGHTER_TRAITS[current.id].perk}
+            </p>
+            <p className="text-[10px] text-neutral-400 font-mono" dir="ltr">
+              melee x{FIGHTER_TRAITS[current.id].melee} • ranged x{FIGHTER_TRAITS[current.id].ranged} • speed x{FIGHTER_TRAITS[current.id].speed}
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-neutral-950/70 border border-neutral-800/80 p-3 rounded-lg">
               <span className="text-[11px] font-bold text-cyan-400 block mb-1">
@@ -151,6 +176,16 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-2.5">
+          {onOpenStages && (
+            <button
+              id="btn-open-stages-select"
+              onClick={onOpenStages}
+              className="py-3.5 px-5 rounded-xl bg-emerald-900 hover:bg-emerald-800 active:scale-[0.99] text-emerald-100 border border-emerald-600 font-bold text-sm transition-all flex items-center justify-center gap-2"
+            >
+              <span>🗺️</span>
+              <span>المراحل</span>
+            </button>
+          )}
           {onOpenGuide && (
             <button
               id="btn-open-guide-select"

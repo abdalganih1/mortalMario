@@ -13,6 +13,8 @@ export interface MobileControlsProps {
       | 'closeSpecial'
       | 'dash'
       | 'dashUp'
+      | 'down'
+      | 'block'
       | 'special1'
       | 'special2'
   ) => void;
@@ -26,6 +28,8 @@ export interface MobileControlsProps {
       | 'closeSpecial'
       | 'dash'
       | 'dashUp'
+      | 'down'
+      | 'block'
       | 'special1'
       | 'special2'
   ) => void;
@@ -37,6 +41,8 @@ export interface MobileControlsProps {
   upShiftCooldown?: number;
   hasAirShift?: boolean;
   isGrounded?: boolean;
+  rangedLocked?: boolean;
+  upshiftLocked?: boolean;
 }
 
 export const MobileControls: React.FC<MobileControlsProps> = ({
@@ -50,6 +56,8 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
   upShiftCooldown = 0,
   hasAirShift = true,
   isGrounded = true,
+  rangedLocked = false,
+  upshiftLocked = false,
 }) => {
   // Support both new prop names and backwards compatible prop names
   const cdRanged = cooldownRangedSpecial !== undefined ? cooldownRangedSpecial : cooldownSpecial1;
@@ -65,6 +73,8 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
       | 'closeSpecial'
       | 'dash'
       | 'dashUp'
+      | 'down'
+      | 'block'
       | 'special1'
       | 'special2'
   ) => {
@@ -142,6 +152,110 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
           rangedTheme:
             'bg-emerald-950/90 border-emerald-400 text-emerald-100 shadow-[0_0_14px_rgba(34,197,94,0.45)]',
         };
+      case 'baraka':
+        return {
+          rangedName: 'شرارة شفرة 🔪',
+          rangedSub: 'Blade Spark',
+          closeName: 'تمزيق دوار 🌀',
+          closeShort: 'تمزيق 🌀',
+          rangedTheme:
+            'bg-rose-950/90 border-rose-400 text-rose-100 shadow-[0_0_14px_rgba(244,63,94,0.45)]',
+        };
+      case 'liukang':
+        return {
+          rangedName: 'نار التنين 🐉',
+          rangedSub: 'Dragon Fire',
+          closeName: 'ركلة الدراجة 🦵',
+          closeShort: 'دراجة 🦵',
+          rangedTheme:
+            'bg-orange-950/90 border-orange-400 text-orange-100 shadow-[0_0_14px_rgba(249,115,22,0.45)]',
+        };
+      case 'kitana':
+        return {
+          rangedName: 'رمي مروحة 🪭',
+          rangedSub: 'Fan Throw',
+          closeName: 'رفعة مروحة ⬆️',
+          closeShort: 'رفعة ⬆️',
+          rangedTheme:
+            'bg-blue-950/90 border-blue-400 text-blue-100 shadow-[0_0_14px_rgba(96,165,250,0.45)]',
+        };
+      case 'shangtsung':
+        return {
+          rangedName: 'جمجمة روح 💀',
+          rangedSub: 'Soul Skull',
+          closeName: 'تحول ظل 👤',
+          closeShort: 'تحول 👤',
+          rangedTheme:
+            'bg-violet-950/90 border-violet-400 text-violet-100 shadow-[0_0_14px_rgba(168,85,247,0.45)]',
+        };
+      case 'kunglao':
+        return {
+          rangedName: 'قبعة شفرة 🎩',
+          rangedSub: 'Hat Throw',
+          closeName: 'إعصار قبعة 🌀',
+          closeShort: 'إعصار 🌀',
+          rangedTheme:
+            'bg-yellow-950/90 border-yellow-400 text-yellow-100 shadow-[0_0_14px_rgba(234,179,8,0.45)]',
+        };
+      case 'johnnycage':
+        return {
+          rangedName: 'كرة كيج 🕶️',
+          rangedSub: 'Cage Bolt',
+          closeName: 'ركلة الظل 🦵',
+          closeShort: 'ظل 🦵',
+          rangedTheme:
+            'bg-green-950/90 border-green-400 text-green-100 shadow-[0_0_14px_rgba(74,222,128,0.45)]',
+        };
+      case 'jax':
+        return {
+          rangedName: 'موجة صدمة 🦾',
+          rangedSub: 'Shockwave',
+          closeName: 'غوتشا 👊👊',
+          closeShort: 'غوتشا 👊',
+          rangedTheme:
+            'bg-slate-950/90 border-slate-400 text-slate-100 shadow-[0_0_14px_rgba(148,163,184,0.45)]',
+        };
+      case 'sonya':
+        return {
+          rangedName: 'حلقة طاقة 💖',
+          rangedSub: 'Energy Ring',
+          closeName: 'ركلة مقص 🦵',
+          closeShort: 'مقص 🦵',
+          rangedTheme:
+            'bg-pink-950/90 border-pink-400 text-pink-100 shadow-[0_0_14px_rgba(244,114,182,0.45)]',
+        };
+      case 'kano':
+        return { rangedName: 'سكين كانو 🔪', rangedSub: 'Knife', closeName: 'كرة مدفع 🌀', closeShort: 'مدفع 🌀', rangedTheme: 'bg-red-950/90 border-red-400 text-red-100 shadow-[0_0_14px_rgba(239,68,68,0.45)]' };
+      case 'jade':
+        return { rangedName: 'بوميرانغ 🪃', rangedSub: 'Rang', closeName: 'ركلة خفية 🦵', closeShort: 'خفية 🦵', rangedTheme: 'bg-emerald-950/90 border-emerald-400 text-emerald-100 shadow-[0_0_14px_rgba(16,185,129,0.45)]' };
+      case 'mileena':
+        return { rangedName: 'سكين ساي 👄', rangedSub: 'Sai', closeName: 'انقضاض 👊', closeShort: 'عضة 👊', rangedTheme: 'bg-pink-950/90 border-pink-400 text-pink-100 shadow-[0_0_14px_rgba(236,72,153,0.45)]' };
+      case 'ermac':
+        return { rangedName: 'رفع ذهني 🔴', rangedSub: 'Slam', closeName: 'انتقال شبحي 👤', closeShort: 'شبح 👤', rangedTheme: 'bg-red-950/90 border-red-400 text-red-100 shadow-[0_0_14px_rgba(220,38,38,0.45)]' };
+      case 'smoke':
+        return { rangedName: 'قنبلة دخان 💨', rangedSub: 'Bomb', closeName: 'اندفاع دخان 🌀', closeShort: 'دخان 🌀', rangedTheme: 'bg-gray-950/90 border-gray-400 text-gray-100 shadow-[0_0_14px_rgba(156,163,175,0.45)]' };
+      case 'rain':
+        return { rangedName: 'كرة ماء 🌧️', rangedSub: 'Water', closeName: 'ينبوع ⬆️', closeShort: 'ينبوع ⬆️', rangedTheme: 'bg-sky-950/90 border-sky-400 text-sky-100 shadow-[0_0_14px_rgba(14,165,233,0.45)]' };
+      case 'sindel':
+        return { rangedName: 'صرخة 📢', rangedSub: 'Scream', closeName: 'جلدة شعر 💇', closeShort: 'جلدة 💇', rangedTheme: 'bg-purple-950/90 border-purple-400 text-purple-100 shadow-[0_0_14px_rgba(192,132,252,0.45)]' };
+      case 'nightwolf':
+        return { rangedName: 'سهم روح 🐺', rangedSub: 'Arrow', closeName: 'توماهوك 🪓', closeShort: 'فأس 🪓', rangedTheme: 'bg-yellow-950/90 border-yellow-400 text-yellow-100 shadow-[0_0_14px_rgba(161,98,7,0.45)]' };
+      case 'kabal':
+        return { rangedName: 'منشار 🌪️', rangedSub: 'Saw', closeName: 'نوماد ⚡', closeShort: 'نوماد ⚡', rangedTheme: 'bg-stone-950/90 border-stone-400 text-stone-100 shadow-[0_0_14px_rgba(120,113,108,0.45)]' };
+      case 'sheeva':
+        return { rangedName: 'نار شيفا 🔥', rangedSub: 'Fire', closeName: 'زلزال 👊', closeShort: 'زلزال 👊', rangedTheme: 'bg-orange-950/90 border-orange-400 text-orange-100 shadow-[0_0_14px_rgba(234,88,12,0.45)]' };
+      case 'quanchi':
+        return { rangedName: 'جمجمة 🔮', rangedSub: 'Skull', closeName: 'غيبوبة 😵', closeShort: 'غيبوبة 😵', rangedTheme: 'bg-lime-950/90 border-lime-400 text-lime-100 shadow-[0_0_14px_rgba(101,163,13,0.45)]' };
+      case 'fujin':
+        return { rangedName: 'عاصفة 🌪️', rangedSub: 'Wind', closeName: 'ركلة سماء 🦵', closeShort: 'سماء 🦵', rangedTheme: 'bg-slate-950/90 border-slate-200 text-slate-100 shadow-[0_0_14px_rgba(226,232,240,0.45)]' };
+      case 'striker':
+        return { rangedName: 'قنبلة 🚔', rangedSub: 'Grenade', closeName: 'هراوة 👮', closeShort: 'هراوة 👮', rangedTheme: 'bg-blue-950/90 border-blue-400 text-blue-100 shadow-[0_0_14px_rgba(37,99,235,0.45)]' };
+      case 'goro':
+        return { rangedName: 'نار غورو 👹', rangedSub: 'Fire', closeName: 'سحق 👊', closeShort: 'سحق 👊', rangedTheme: 'bg-amber-950/90 border-amber-400 text-amber-100 shadow-[0_0_14px_rgba(180,83,9,0.45)]' };
+      case 'kintaro':
+        return { rangedName: 'نار النمر 🐯', rangedSub: 'Flames', closeName: 'دوسة 🦶', closeShort: 'دوسة 🦶', rangedTheme: 'bg-red-950/90 border-red-400 text-red-100 shadow-[0_0_14px_rgba(220,38,38,0.45)]' };
+      case 'shaokahn':
+        return { rangedName: 'مطرقة كان 🔨', rangedSub: 'Hammer', closeName: 'دفعة كتف 💪', closeShort: 'كتف 💪', rangedTheme: 'bg-amber-950/90 border-yellow-400 text-yellow-100 shadow-[0_0_14px_rgba(245,158,11,0.45)]' };
     }
   };
 
@@ -152,36 +266,25 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
     <div
       id="mobile-touch-controller"
       dir="ltr"
-      className="fixed inset-x-0 bottom-0 pointer-events-none z-40 select-none pb-2 sm:pb-3 px-3 sm:px-6 flex flex-col justify-end bg-gradient-to-t from-black/85 via-black/40 to-transparent"
+      className="fixed inset-x-0 bottom-0 pointer-events-none z-40 select-none pb-[max(0.5rem,env(safe-area-inset-bottom))] landscape:pb-1 px-2 sm:px-6 flex flex-col justify-end bg-gradient-to-t from-black/85 via-black/40 to-transparent"
     >
-      {/* Top Controls Guide Banner (Clear, uncluttered instruction) */}
-      <div className="flex justify-center mb-1.5 pointer-events-none">
-        <div className="bg-neutral-900/80 border border-neutral-700/70 rounded-full px-3 py-0.5 text-[10px] sm:text-xs text-neutral-300 flex items-center gap-2 backdrop-blur-sm shadow-md">
-          <span className="text-amber-400 font-bold">2x 🦘 قفز = 🚀 شيفت لأعلى</span>
-          <span className="text-neutral-500">|</span>
-          <span className="text-cyan-400 font-bold">2x ⬅️/➡️ = ⚡ شفت خاطف</span>
-          <span className="text-neutral-500">|</span>
-          <span className="text-red-400 font-bold">2x 🥊 = {fighter.closeShort}</span>
-        </div>
-      </div>
-
-      {/* Main Touch Buttons Row (Decluttered: 2 buttons on left, 3 on right) */}
-      <div className="flex justify-between items-end w-full">
+      {/* Main Touch Buttons Row — compact portrait grid, roomy desktop row */}
+      <div className="flex justify-between items-end w-full gap-1">
         {/* LEFT SIDE: Directional Controls (Double-tap left/right = Dash Left/Right) */}
-        <div className="flex items-center gap-2.5 pointer-events-auto" dir="ltr">
+        <div className="flex items-center gap-1.5 pointer-events-auto" dir="ltr">
           {/* LEFT BUTTON */}
           <button
             id="btn-move-left"
             type="button"
             {...bindControl('left')}
-            className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-neutral-900/90 border-2 border-neutral-700 active:border-cyan-400 active:bg-neutral-800 text-white flex flex-col items-center justify-center shadow-xl active:scale-95 transition-transform backdrop-blur-sm"
+            className="w-12 h-14 sm:w-20 sm:h-20 landscape:w-11 landscape:h-11 landscape:opacity-80 rounded-2xl bg-neutral-900/90 border-2 border-neutral-700 active:border-cyan-400 active:bg-neutral-800 text-white flex flex-col items-center justify-center shadow-xl active:scale-95 transition-transform backdrop-blur-sm"
             aria-label="Move Left / Double-tap to Dash Left"
           >
-            <svg className="w-7 h-7 sm:w-8 sm:h-8 text-neutral-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 sm:w-8 sm:h-8 text-neutral-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.8" d="M15 19l-7-7 7-7" />
             </svg>
-            <span className="text-[11px] font-black text-neutral-200">يسار</span>
-            <span className="text-[8px] font-mono text-cyan-400 tracking-tighter">2x ⚡ شفت</span>
+            <span className="text-[10px] sm:text-[11px] font-black text-neutral-200">يسار</span>
+            <span className="text-[7px] sm:text-[8px] font-mono text-cyan-400 tracking-tighter">2x ⚡ شفت</span>
           </button>
 
           {/* RIGHT BUTTON */}
@@ -189,34 +292,61 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
             id="btn-move-right"
             type="button"
             {...bindControl('right')}
-            className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-neutral-900/90 border-2 border-neutral-700 active:border-cyan-400 active:bg-neutral-800 text-white flex flex-col items-center justify-center shadow-xl active:scale-95 transition-transform backdrop-blur-sm"
+            className="w-12 h-14 sm:w-20 sm:h-20 landscape:w-11 landscape:h-11 landscape:opacity-80 rounded-2xl bg-neutral-900/90 border-2 border-neutral-700 active:border-cyan-400 active:bg-neutral-800 text-white flex flex-col items-center justify-center shadow-xl active:scale-95 transition-transform backdrop-blur-sm"
             aria-label="Move Right / Double-tap to Dash Right"
           >
-            <svg className="w-7 h-7 sm:w-8 sm:h-8 text-neutral-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 sm:w-8 sm:h-8 text-neutral-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.8" d="M9 5l7 7-7 7" />
             </svg>
-            <span className="text-[11px] font-black text-neutral-200">يمين</span>
-            <span className="text-[8px] font-mono text-cyan-400 tracking-tighter">2x ⚡ شفت</span>
+            <span className="text-[10px] sm:text-[11px] font-black text-neutral-200">يمين</span>
+            <span className="text-[7px] sm:text-[8px] font-mono text-cyan-400 tracking-tighter">2x ⚡ شفت</span>
+          </button>
+
+          {/* DOWN / CROUCH / PIPE ENTER BUTTON */}
+          <button
+            id="btn-move-down"
+            type="button"
+            {...bindControl('down')}
+            className="w-11 h-14 sm:w-16 sm:h-20 landscape:w-10 landscape:h-11 landscape:opacity-80 rounded-2xl bg-neutral-900/90 border-2 border-emerald-700 active:border-emerald-400 active:bg-neutral-800 text-white flex flex-col items-center justify-center shadow-xl active:scale-95 transition-transform backdrop-blur-sm"
+            aria-label="Crouch / Enter Warp Pipe"
+          >
+            <svg className="w-5 h-5 sm:w-7 sm:h-7 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+            <span className="text-[10px] sm:text-[11px] font-black text-neutral-200">▼ انحناء</span>
+            <span className="text-[7px] sm:text-[8px] font-mono text-emerald-400 tracking-tighter">أنبوب ▼</span>
           </button>
         </div>
 
-        {/* RIGHT SIDE: 3 Ergonomic Buttons (Ranged Special, Attack, Jump) */}
-        <div className="flex items-end gap-2.5 pointer-events-auto" dir="ltr">
+        {/* RIGHT SIDE: compact 2x2 thumb grid on phones, full row on desktop */}
+        <div className="grid grid-cols-2 gap-1.5 sm:flex sm:items-end sm:gap-2.5 pointer-events-auto" dir="ltr">
+          {/* 0. DEDICATED DEFEND (زر الدفاع — اضغط باستمرار للصد) */}
+          <button
+            id="btn-action-defend"
+            type="button"
+            {...bindControl('block')}
+            className="w-14 h-12 sm:w-16 sm:h-20 landscape:h-11 landscape:opacity-80 rounded-2xl bg-blue-950/90 border-2 border-blue-400 active:border-blue-200 active:bg-blue-900 text-white flex flex-col items-center justify-center shadow-xl active:scale-95 transition-transform backdrop-blur-sm"
+            aria-label="Defend / Block"
+          >
+            <span className="text-base sm:text-xl leading-tight">🛡️</span>
+            <span className="text-[10px] sm:text-[11px] font-black leading-tight">دفاع</span>
+            <span className="text-[7px] sm:text-[8px] font-mono text-blue-200 tracking-tighter">اضغط مطولاً</span>
+          </button>
           {/* 1. DEDICATED RANGED SPECIAL (حركة 2 البعيدة - زر منفصل ومخصص) */}
           <button
             id="btn-action-ranged-special"
             type="button"
             {...bindControl('rangedSpecial')}
-            className={`h-16 sm:h-18 px-3.5 sm:px-4 rounded-2xl border-2 flex flex-col items-center justify-center text-white shadow-xl active:scale-95 transition-transform backdrop-blur-sm ${
-              fighter.rangedTheme
+            className={`h-12 sm:h-18 px-2 sm:px-4 landscape:h-11 landscape:opacity-80 rounded-2xl border-2 flex flex-col items-center justify-center text-white shadow-xl active:scale-95 transition-transform backdrop-blur-sm ${
+              rangedLocked ? 'bg-neutral-900/90 border-neutral-700 text-neutral-400 saturate-0' : fighter.rangedTheme
             } ${cdRanged > 0 ? 'opacity-65' : 'hover:brightness-110'}`}
             aria-label="Ranged Special Move"
           >
-            <span className="text-xs sm:text-sm font-black whitespace-nowrap leading-tight">
-              {fighter.rangedName}
+            <span className="text-[10px] sm:text-sm font-black whitespace-nowrap leading-tight">
+              {rangedLocked ? '🔒 مقفولة' : fighter.rangedName}
             </span>
-            <span className="text-[9px] font-mono opacity-90 tracking-tighter">
-              {cdRanged > 0 ? `⏳ ${Math.ceil(cdRanged)}s` : '🎯 حركة بعيدة'}
+            <span className="text-[7px] sm:text-[9px] font-mono opacity-90 tracking-tighter">
+              {rangedLocked ? 'المرحلة 3' : cdRanged > 0 ? `⏳ ${Math.ceil(cdRanged)}s` : '🎯 حركة بعيدة'}
             </span>
           </button>
 
@@ -225,11 +355,11 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
             id="btn-action-attack"
             type="button"
             {...bindControl('attack')}
-            className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-red-900/90 border-2 border-red-500 active:border-red-300 active:bg-red-800 text-white flex flex-col items-center justify-center shadow-xl active:scale-95 transition-transform backdrop-blur-sm"
+            className="w-14 h-12 sm:w-20 sm:h-20 landscape:h-11 landscape:opacity-80 rounded-2xl bg-red-900/90 border-2 border-red-500 active:border-red-300 active:bg-red-800 text-white flex flex-col items-center justify-center shadow-xl active:scale-95 transition-transform backdrop-blur-sm"
             aria-label="Attack / Double-tap for Close Special"
           >
-            <span className="text-xs sm:text-sm font-black leading-tight">🥊 قتال</span>
-            <span className="text-[9px] font-mono text-red-200 tracking-tighter">
+            <span className="text-[10px] sm:text-sm font-black leading-tight">🥊 قتال</span>
+            <span className="text-[7px] sm:text-[9px] font-mono text-red-200 tracking-tighter">
               {cdClose > 0 ? `⏳ ${Math.ceil(cdClose)}s` : `2x ${fighter.closeShort}`}
             </span>
           </button>
@@ -239,19 +369,21 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
             id="btn-action-jump"
             type="button"
             {...bindControl('jump')}
-            className={`w-16 h-16 sm:w-18 sm:h-18 rounded-2xl border-2 flex flex-col items-center justify-center text-white shadow-2xl active:scale-95 transition-transform backdrop-blur-sm ${
+            className={`w-14 h-12 sm:w-20 sm:h-20 landscape:h-11 landscape:opacity-80 rounded-2xl border-2 flex flex-col items-center justify-center text-white shadow-2xl active:scale-95 transition-transform backdrop-blur-sm ${
               isUpShiftAvailable
                 ? 'bg-emerald-700/90 border-emerald-400 active:bg-emerald-600 shadow-[0_0_12px_rgba(16,185,129,0.4)]'
                 : 'bg-emerald-900/70 border-emerald-600/60 text-emerald-200'
             }`}
             aria-label="Jump / Double-tap for Upward Super Shift"
           >
-            <svg className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 sm:w-7 sm:h-7 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 10l7-7m0 0l7 7m-7-7v18" />
             </svg>
-            <span className="text-xs font-black">قفز</span>
-            <span className="text-[8px] font-mono tracking-tighter">
-              {upShiftCooldown > 0
+            <span className="text-[10px] sm:text-xs font-black">قفز</span>
+            <span className="text-[7px] sm:text-[8px] font-mono tracking-tighter">
+              {upshiftLocked
+                ? '🔒 المرحلة 4'
+                : upShiftCooldown > 0
                 ? `⏳ ${Math.ceil(upShiftCooldown)}s`
                 : !isGrounded && !hasAirShift
                 ? '⛔ المس الأرض'

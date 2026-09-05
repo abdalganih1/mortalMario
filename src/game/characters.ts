@@ -76,4 +76,553 @@ export const FIGHTERS: Record<FighterId, FighterConfig> = {
     special2Desc: 'كرة طاقة دوارة خضراء تتدحرج وتقذف الوحوش عالياً في الهواء مع ضرر متكرر!',
     quote: 'You cannot hide from my venom!',
   },
+  baraka: {
+    id: 'baraka',
+    name: 'Baraka',
+    nameAr: 'باراكا',
+    title: 'وحش التاركاتان وشفرات الموت',
+    primaryColor: '#f43f5e',
+    accentColor: '#881337',
+    description: 'محارب التاركاتان المتوحش بشفراته المزروعة في ذراعيه. يطلق شرارة الشفرات من بعيد ويمزق كل من يقترب بهجوم التمزيق الدوار!',
+    avatar: '🔪',
+    special1Name: 'شرارة الشفرة (Blade Spark)',
+    special1Desc: 'يطلق شرارة حادة من شفراته تخترق صفوف الأعداء من مسافة بعيدة!',
+    special2Name: 'التمزيق الدوار (Shredder Spin)',
+    special2Desc: 'يدور بشفراته الممدودة ويمزق كل وحش يلمسه مع حماية كاملة أثناء الدوران!',
+    quote: 'Feel the blades of doom!',
+  },
+  liukang: {
+    id: 'liukang',
+    name: 'Liu Kang',
+    nameAr: 'ليو كانغ',
+    title: 'بطل الشاولين وقبضة التنين',
+    primaryColor: '#f97316',
+    accentColor: '#7c2d12',
+    description: 'بطل معبد الشاولين وخليفة التنين. يقذف كرة نار التنين من بعيد ويسحق الأعداء بركلة الدراجة الطائرة المتتالية!',
+    avatar: '🐉',
+    special1Name: 'نار التنين (Dragon Fireball)',
+    special1Desc: 'كرة نارية على شكل تنين تحرق كل ما يعترضها وتخترق الأعداء الضعفاء!',
+    special2Name: 'ركلة الدراجة (Bicycle Kick)',
+    special2Desc: 'اندفاع طائر بركلات متتالية سريعة يصيب كل الأعداء في طريقه عدة مرات!',
+    quote: 'Feel the fury of Shaolin!',
+  },
+  kitana: {
+    id: 'kitana',
+    name: 'Kitana',
+    nameAr: 'كيتانا',
+    title: 'أميرة إيدينيا ومراوح الفولاذ',
+    primaryColor: '#60a5fa',
+    accentColor: '#1e3a8a',
+    description: 'أميرة إيدينيا بمراوحها الفولاذية القاتلة. ترمي مروحة تقطع الأعداء عن بعد وترفع الخصوم القريبين بضربة المروحة الصاعدة!',
+    avatar: '🪭',
+    special1Name: 'رمي المروحة (Fan Throw)',
+    special1Desc: 'ترمي مروحة فولاذية دوارة تقطع الأعداء وتعود مخترقة كل من في طريقها!',
+    special2Name: 'رفعة المروحة (Fan Lift)',
+    special2Desc: 'ضربة مروحة صاعدة ترفع كل الأعداء القريبين عالياً في الهواء مع ضرر مضاعف!',
+    quote: 'You will taste my steel!',
+  },
+  shangtsung: {
+    id: 'shangtsung',
+    name: 'Shang Tsung',
+    nameAr: 'شانغ تسونغ',
+    title: 'ساحر الأرواح وزعيم الجزيرة',
+    primaryColor: '#a855f7',
+    accentColor: '#3b0764',
+    description: 'ساحر الأرواح الشرير الذي يسرق أرواح المقاتلين. يقذف جماجم نارية خضراء ويتحول لهيئة ظل مرعبة تسحق كل من يقترب!',
+    avatar: '💀',
+    special1Name: 'جمجمة الروح (Soul Skull)',
+    special1Desc: 'يطلق جمجمة نارية ملتهبة تطارد الأعداء وتلحق بهم ضرراً نارياً مستمراً!',
+    special2Name: 'تحول الظل (Shadow Morph)',
+    special2Desc: 'يتحول لظل شيطاني يندفع للأمام ويسحق كل الأعداء مع مناعة كاملة أثناء التحول!',
+    quote: 'Your soul is mine!',
+  },
+  kunglao: {
+    id: 'kunglao',
+    name: 'Kung Lao',
+    nameAr: 'كونغ لاو',
+    title: 'راهب الشاولين وقبعة الموت',
+    primaryColor: '#eab308',
+    accentColor: '#713f12',
+    description: 'راهب الشاولين صاحب القبعة الشفرة الأسطورية. يرمي قبعته فتقطع الأعداء وتعود، ويدور كالإعصار بقبعته الدوارة!',
+    avatar: '🎩',
+    special1Name: 'رمي القبعة (Hat Throw)',
+    special1Desc: 'يرمي قبعته المشحوذة كالشفرة الدوارة تخترق صفوف الأعداء وتعود إليه!',
+    special2Name: 'إعصار القبعة (Hat Cyclone)',
+    special2Desc: 'يدور بسرعة الإعصار وقبعته ممدودة فيمزق كل وحش يلمسه مع حماية كاملة!',
+    quote: 'My hat will slice you!',
+  },
+  johnnycage: {
+    id: 'johnnycage',
+    name: 'Johnny Cage',
+    nameAr: 'جوني كيج',
+    title: 'نجم هوليوود ولكمة الظل',
+    primaryColor: '#4ade80',
+    accentColor: '#14532d',
+    description: 'نجم أفلام الأكشن الذي يثبت أن حركاته حقيقية! يقذف كرات الطاقة الخضراء ويسحق الخصوم بلكمة الظل الصاعدة الشهيرة!',
+    avatar: '🕶️',
+    special1Name: 'الكرة الخضراء (Forceball Bolt)',
+    special1Desc: 'يطلق كرة طاقة خضراء متفجرة من قبضته تصعق الأعداء عن بعد!',
+    special2Name: 'ركلة الظل الطائرة (Shadow Kick)',
+    special2Desc: 'الضربة الأشهر بتاريخ المورتال! يطير برجله ممدودة كالسهم ويدهس كل من بطريقه مع وميض أخضر هوليوودي!',
+    quote: "Here's Johnny!",
+  },
+  jax: {
+    id: 'jax',
+    name: 'Jax Briggs',
+    nameAr: 'جاكس',
+    title: 'الرائد جاكس والأذرع الفولاذية',
+    primaryColor: '#94a3b8',
+    accentColor: '#334155',
+    description: 'الرائد في القوات الخاصة بذراعيه المعدنيتين المدمرتين. يطلق موجات الصدمة الأرضية ويسحق الأعداء بمسكة الغوتشا المتتالية!',
+    avatar: '🦾',
+    special1Name: 'موجة الصدمة (Shockwave)',
+    special1Desc: 'يلكم الأرض فتنطلق موجة صدمة مدمرة تزحف وتسحق كل من في طريقها!',
+    special2Name: 'مسكة الغوتشا (Gotcha Grab)',
+    special2Desc: 'يندفع ويمسك العدو بسلسلة لكمات متتالية مدمرة من الأذرع الفولاذية!',
+    quote: 'Gotcha!',
+  },
+  sonya: {
+    id: 'sonya',
+    name: 'Sonya Blade',
+    nameAr: 'سونيا بليد',
+    title: 'الملازم سونيا وحلقات الطاقة',
+    primaryColor: '#f472b6',
+    accentColor: '#831843',
+    description: 'ملازم القوات الخاصة وأسرع مقاتلة في البطولة. ترمي حلقات الطاقة الوردية وتنقض على الأعداء بركلة المقص الطائرة!',
+    avatar: '💖',
+    special1Name: 'حلقة الطاقة (Energy Ring)',
+    special1Desc: 'ترمي حلقة طاقة وردية دوارة تخترق الأعداء وتكهرب كل من تلمسه!',
+    special2Name: 'ركلة المقص (Scissor Kick)',
+    special2Desc: 'تنقض طائرة بركلة مقصية مزدوجة تصيب كل الأعداء في طريقها مرتين!',
+    quote: 'Kiss of death!',
+  },
+  kano: {
+    id: 'kano',
+    name: 'Kano',
+    nameAr: 'كانو',
+    title: 'زعيم التنين الأسود والعين السيبرانية',
+    primaryColor: '#ef4444',
+    accentColor: '#7f1d1d',
+    description: 'مجرم التنين الأسود بعين الليزر السيبرانية. يرمي سكاكينه القاتلة ويتدحرج ككرة المدفع ليسحق كل من يقف بطريقه!',
+    avatar: '👁️',
+    special1Name: 'رمي السكين (Knife Throw)',
+    special1Desc: 'يرمي سكيناً دواراً حاداً يشق صفوف الأعداء بسرعة خاطفة!',
+    special2Name: 'كرة المدفع (Cannonball Roll)',
+    special2Desc: 'يتكور ويدور ككرة مدفع مدمرة تسحق كل الأعداء مع مناعة كاملة!',
+    quote: 'Come here, pretty!',
+  },
+  jade: {
+    id: 'jade',
+    name: 'Jade',
+    nameAr: 'جايد',
+    title: 'حارسة إيدينيا والبوميرانغ القاتل',
+    primaryColor: '#10b981',
+    accentColor: '#065f46',
+    description: 'حارسة الأميرة كيتانا المخلصة. ترمي بوميرانغها الأخضر فيقطع الأعداء ويعود، وتختفي لتظهر بركلة مباغتة!',
+    avatar: '🪃',
+    special1Name: 'البوميرانغ (Razor Rang)',
+    special1Desc: 'ترمي بوميرانغ حاداً يدور ويقطع كل الأعداء في طريقه ذهاباً وإياباً!',
+    special2Name: 'الركلة الخفية (Vanish Kick)',
+    special2Desc: 'تختفي في الظلال ثم تنقض بركلة مباغتة مدمرة خلف العدو!',
+    quote: 'You fight well!',
+  },
+  mileena: {
+    id: 'mileena',
+    name: 'Mileena',
+    nameAr: 'ميلينا',
+    title: 'الأنياب الحية وسكاكين الساي',
+    primaryColor: '#ec4899',
+    accentColor: '#831843',
+    description: 'المستنسخة المتوحشة بأنياب التاركاتان. ترمي سكاكين الساي القاتلة وتنقض بعضة Ravenous تمزق كل من تقترب منه!',
+    avatar: '👄',
+    special1Name: 'رمي الساي (Sai Toss)',
+    special1Desc: 'ترمي زوج سكاكين ساي دوارة تخترق الأعداء بسرعة مرعبة!',
+    special2Name: 'الانقضاض المتوحش (Ravenous Rush)',
+    special2Desc: 'تنقض كالوحش بعضة وتمزيق يدمر كل الأعداء القريبين!',
+    quote: 'I will eat you alive!',
+  },
+  ermac: {
+    id: 'ermac',
+    name: 'Ermac',
+    nameAr: 'إيرماك',
+    title: 'جماعة الأرواح والتحريك الذهني',
+    primaryColor: '#dc2626',
+    accentColor: '#450a0a',
+    description: 'كيان من آلاف الأرواح المحبوسة. يرفع الأعداء بقوة التحريك الذهني ويحطمهم أرضاً، ويتنقل آنياً كالشبح!',
+    avatar: '🔴',
+    special1Name: 'الرفع الذهني (Telekinetic Slam)',
+    special1Desc: 'يرفع كل الأعداء القريبين بقوة ذهنية حمراء ويحطمهم أرضاً بعنف!',
+    special2Name: 'الانتقال الشبحي (Soul Teleport)',
+    special2Desc: 'يذوب كالأرواح ويظهر خلف الأعداء بضربة مدمرة مع مناعة كاملة!',
+    quote: 'We are many!',
+  },
+  smoke: {
+    id: 'smoke',
+    name: 'Smoke',
+    nameAr: 'سموك',
+    title: 'النينجا الرمادي وسيد الدخان',
+    primaryColor: '#6b7280',
+    accentColor: '#1f2937',
+    description: 'النينجا الذي تحول لدخان حي. يفجر قنابل الدخان الخانقة ويذوب في الهواء ليظهر بضربات مباغتة لا ترى!',
+    avatar: '💨',
+    special1Name: 'قنبلة الدخان (Smoke Bomb)',
+    special1Desc: 'يفجر سحابة دخان خانقة حوله تدمر كل الأعداء القريبين!',
+    special2Name: 'اندفاع الدخان (Smoke Dash)',
+    special2Desc: 'يتحول لدخان ويندفع للأمام مخترقاً كل الأعداء مع مناعة كاملة!',
+    quote: 'Where there is smoke...',
+  },
+  rain: {
+    id: 'rain',
+    name: 'Rain',
+    nameAr: 'راين',
+    title: 'أمير إيدينيا وسيد الماء',
+    primaryColor: '#0ea5e9',
+    accentColor: '#0c4a6e',
+    description: 'أمير إيدينيا المنفي المتحكم بالماء والعواصف. يقذف كرات الماء القاطعة ويفجر الينابيع من تحت أقدام الأعداء!',
+    avatar: '🌧️',
+    special1Name: 'كرة الماء (Water Ball)',
+    special1Desc: 'يقذف كرة ماء مضغوطة تقطع الأعداء كالشفرة السائلة!',
+    special2Name: 'الينبوع المتفجر (Geyser Burst)',
+    special2Desc: 'يفجر نافورة ماء عملاقة من الأرض ترفع كل الأعداء عالياً!',
+    quote: 'Feel the storm!',
+  },
+  sindel: {
+    id: 'sindel',
+    name: 'Sindel',
+    nameAr: 'سيندل',
+    title: 'ملكة إيدينيا والصرخة القاتلة',
+    primaryColor: '#c084fc',
+    accentColor: '#581c87',
+    description: 'ملكة إيدينيا صاحبة الصرخة التي تشق الجبال. تطلق موجات صرختها المدمرة وتجلد الأعداء بشعرها الطويل!',
+    avatar: '📢',
+    special1Name: 'موجة الصرخة (Banshee Wave)',
+    special1Desc: 'تطلق صرخة فوق صوتية مدمرة تزحف على الأرض وتسحق كل من في طريقها!',
+    special2Name: 'جلدة الشعر (Hair Whip)',
+    special2Desc: 'تجلد بشعرها الطويل كل الأعداء القريبين وترفعهم عالياً!',
+    quote: 'Scream for me!',
+  },
+  nightwolf: {
+    id: 'nightwolf',
+    name: 'Nightwolf',
+    nameAr: 'نايت وولف',
+    title: 'شامان القبيلة وروح الذئب',
+    primaryColor: '#a16207',
+    accentColor: '#422006',
+    description: 'شامان قبيلة الماتوكا المتصل بأرواح الأجداد. يرمي سهام الروح المضيئة وينقض بفأس التوماهوك المقدس!',
+    avatar: '🐺',
+    special1Name: 'سهم الروح (Spirit Arrow)',
+    special1Desc: 'يرمي سهماً روحياً مضيئاً يخترق الأعداء بقوة الأجداد!',
+    special2Name: 'هجوم التوماهوك (Tomahawk Charge)',
+    special2Desc: 'ينقض طائراً بفأسه المقدس في سلسلة ضربات مدمرة!',
+    quote: 'The spirits guide me!',
+  },
+  kabal: {
+    id: 'kabal',
+    name: 'Kabal',
+    nameAr: 'كابال',
+    title: 'أسرع رجل حي والمنشار الدوار',
+    primaryColor: '#78716c',
+    accentColor: '#292524',
+    description: 'الناجي المحترق الذي صار أسرع من الرصاص. يرمي منشاره الدوار ويندفع بسرعة Nomad التي لا تراها العين!',
+    avatar: '🌪️',
+    special1Name: 'المنشار الطائر (Buzzsaw)',
+    special1Desc: 'يرمي منشاراً دواراً مسنناً يمزق كل الأعداء في طريقه!',
+    special2Name: 'اندفاع النوماد (Nomad Dash)',
+    special2Desc: 'اندفاع بسرعة خارقة يصدم كل الأعداء قبل أن يروه حتى!',
+    quote: 'Too slow!',
+  },
+  sheeva: {
+    id: 'sheeva',
+    name: 'Sheeva',
+    nameAr: 'شيفا',
+    title: 'ملكة الشوكان ذات الأذرع الأربعة',
+    primaryColor: '#ea580c',
+    accentColor: '#7c2d12',
+    description: 'محاربة الشوكان العملاقة بأذرعها الأربعة المدمرة. تبصق النار وتدك الأرض بقبضاتها فترتجف المرحلة كلها!',
+    avatar: '🔥',
+    special1Name: 'بصقة النار (Fire Spit)',
+    special1Desc: 'تبصق كرة نارية عملاقة تحرق كل ما يعترضها!',
+    special2Name: 'دكة الزلزال (Quake Pound)',
+    special2Desc: 'تدك الأرض بأذرعها الأربعة في زلزال يدمر كل الأعداء القريبين!',
+    quote: 'Crush you!',
+  },
+  quanchi: {
+    id: 'quanchi',
+    name: 'Quan Chi',
+    nameAr: 'كوان تشي',
+    title: 'ساحر العالم السفلي ومخدر العقول',
+    primaryColor: '#65a30d',
+    accentColor: '#1a2e05',
+    description: 'أخبث سحرة العالم السفلي. يرمي الجماجم الخضراء ويدخل الأعداء في غيبوبة Trance يضربهم فيها بلا رحمة!',
+    avatar: '🔮',
+    special1Name: 'جمجمة الظلام (Dark Skull)',
+    special1Desc: 'يرمي جمجمة سحرية خضراء تلاحق الأعداء وتمتص أرواحهم!',
+    special2Name: 'الغيبوبة (Mind Trance)',
+    special2Desc: 'يدخل كل الأعداء القريبين في غيبوبة دوخة طويلة مفتوحين للضرب!',
+    quote: 'Your mind is mine!',
+  },
+  fujin: {
+    id: 'fujin',
+    name: 'Fujin',
+    nameAr: 'فوجين',
+    title: 'إله الريح وسيف الإعصار',
+    primaryColor: '#e2e8f0',
+    accentColor: '#64748b',
+    description: 'إله الريح شقيق رايدن بسيف الإعصار. يطلق عواصف هوائية تقتلع الأعداء ويركل بركلات السماء الطائرة!',
+    avatar: '🌪️',
+    special1Name: 'عاصفة الريح (Wind Blast)',
+    special1Desc: 'يطلق عاصفة هوائية دوارة تقتلع الأعداء من أماكنهم!',
+    special2Name: 'ركلة السماء (Sky Kick)',
+    special2Desc: 'يطير بركلة إعصارية مزدوجة تصيب كل الأعداء مرتين!',
+    quote: 'The wind obeys!',
+  },
+  striker: {
+    id: 'striker',
+    name: 'Stryker',
+    nameAr: 'سترايكر',
+    title: 'شرطي الشغب والقنابل اليدوية',
+    primaryColor: '#2563eb',
+    accentColor: '#1e3a8a',
+    description: 'شرطي مكافحة الشغب الذي واجه الغزو وحده. يرمي قنابله اليدوية المتفجرة ويهجم بهراوته بضربات الشرطة القاسية!',
+    avatar: '🚔',
+    special1Name: 'القنبلة اليدوية (Grenade Toss)',
+    special1Desc: 'يرمي قنبلة يدوية تنفجر فوق الأعداء بشظايا مدمرة!',
+    special2Name: 'هجوم الهراوة (Baton Rush)',
+    special2Desc: 'يندفع بهراوته في سلسلة ضربات شرطية قاسية متتالية!',
+    quote: 'Police brutality!',
+  },
+  goro: {
+    id: 'goro',
+    name: 'Goro',
+    nameAr: 'غورو',
+    title: 'أمير الشوكان الذي لا يقهر',
+    primaryColor: '#b45309',
+    accentColor: '#451a03',
+    description: 'بطل المورتال كومبات لتسعة أجيال بأذرعه الأربعة. يبصق النار ويسحق الأرض بلكمات الأذرع الأربعة المدمرة!',
+    avatar: '👹',
+    special1Name: 'نار الشوكان (Shokan Fire)',
+    special1Desc: 'يبصق كرة نارية عملاقة من فمه الوحشي تحرق كل شيء!',
+    special2Name: 'سحق الأذرع (Four-Arm Crush)',
+    special2Desc: 'يسحق بأذرعه الأربعة معاً في ضربة زلزالية مدمرة!',
+    quote: 'You die now!',
+  },
+  kintaro: {
+    id: 'kintaro',
+    name: 'Kintaro',
+    nameAr: 'كينتارو',
+    title: 'نمر الشوكان وقائد جيوش كان',
+    primaryColor: '#dc2626',
+    accentColor: '#450a0a',
+    description: 'القائد الأعلى لجيش شاو كان بنمرّيته المخططة. ينفث النار ويتنقل آنياً ليسحق الأعداء من حيث لا يتوقعون!',
+    avatar: '🐯',
+    special1Name: 'نفثة النمر (Tiger Flames)',
+    special1Desc: 'ينفث ألسنة نار النمر التي تلتهم كل الأعداء أمامه!',
+    special2Name: 'دوسة الانتقال (Stomp Teleport)',
+    special2Desc: 'يختفي ويظهر فوق الأعداء بدوسة زلزالية مدمرة!',
+    quote: 'Feel the claws!',
+  },
+  shaokahn: {
+    id: 'shaokahn',
+    name: 'Shao Kahn',
+    nameAr: 'شاو كان',
+    title: 'إمبراطور العالم الخارجي وحاكم الأكوان',
+    primaryColor: '#f59e0b',
+    accentColor: '#451a03',
+    description: 'الإمبراطور الذي غزا العوالم بمطرقته الحربية. يرمي مطرقته الدوارة ويندفع بكتفه في ضربة تسحق الجيوش!',
+    avatar: '🔨',
+    special1Name: 'رمي المطرقة (Hammer Toss)',
+    special1Desc: 'يرمي مطرقته الحربية الدوارة التي تسحق كل من في طريقها!',
+    special2Name: 'دفعة الكتف (Shoulder Charge)',
+    special2Desc: 'يندفع بكتفه المدرع في شحنة مدمرة تهز الشاشة وتسحق كل شيء!',
+    quote: 'You will die!',
+  },
 };
+
+// --- PROGRESSION: fighters unlock by clearing stages (stage index required) ---
+// ORDER = the fighter list order in this file (card 1, 2, 3...). Keep in sync!
+export const FIGHTER_UNLOCK: Record<FighterId, number> = {
+  subzero: 0,
+  scorpion: 0,
+  noob: 1,
+  raiden: 2,
+  reptile: 3,
+  baraka: 4,
+  liukang: 5,
+  kitana: 6,
+  shangtsung: 7,
+  kunglao: 8,
+  johnnycage: 9,
+  jax: 10,
+  sonya: 11,
+  kano: 12,
+  jade: 13,
+  mileena: 14,
+  ermac: 15,
+  smoke: 16,
+  rain: 17,
+  sindel: 18,
+  nightwolf: 19,
+  kabal: 20,
+  sheeva: 21,
+  quanchi: 22,
+  fujin: 23,
+  striker: 24,
+  goro: 25,
+  kintaro: 26,
+  shaokahn: 27,
+};
+
+// --- FIGHTER TRAITS: what makes each fighter play differently ---
+// melee = punch damage multiplier, ranged = projectile damage, speed = run multiplier
+// combo = signature 3rd-hit finisher name, perk = passive special trick
+export interface FighterTrait {
+  melee: number;
+  ranged: number;
+  speed: number;
+  combo: string;
+  perk: string;
+}
+
+export const FIGHTER_TRAITS: Record<FighterId, FighterTrait> = {
+  subzero: { melee: 1.0, ranged: 1.2, speed: 1.0, combo: 'تجميد ساحق ❄️', perk: 'الضربة 3 تجمّد العدو بدل قتله — كسّره بلكمة!' },
+  scorpion: { melee: 1.2, ranged: 1.0, speed: 1.0, combo: 'سحب الجحيم 🔥', perk: 'الضربة 3 تسحب العدو البعيد لعندك مثل الرمح!' },
+  noob: { melee: 1.0, ranged: 1.1, speed: 1.05, combo: 'ظل مزدوج 👤', perk: 'الضربة 3 تستدعي ظلاً يضرب معك ضربة إضافية!' },
+  raiden: { melee: 1.0, ranged: 1.3, speed: 1.0, combo: 'عاصفة رعدية ⚡', perk: 'الضربة 3 تكهرب كل الأعداء القريبين!' },
+  reptile: { melee: 1.1, ranged: 1.1, speed: 1.05, combo: 'سمّ مميت 🦎', perk: 'الضربة 3 تسمم العدو — دم مستمر 3 ثوان!' },
+  baraka: { melee: 1.5, ranged: 0.9, speed: 0.95, combo: 'تمزيق وحشي 🔪', perk: 'شفرات حادة: كل اللكمات +50% ضرر دائم!' },
+  liukang: { melee: 1.3, ranged: 1.0, speed: 1.1, combo: 'غضب التنين 🐉', perk: 'الأسرع: ركض أسرع وكومبو أسرع من الكل!' },
+  kitana: { melee: 1.0, ranged: 1.2, speed: 1.05, combo: 'رقصة المراوح 🪭', perk: 'الضربة 3 ترد قذائف الأعداء عليهم!' },
+  shangtsung: { melee: 0.9, ranged: 1.4, speed: 0.95, combo: 'سرقة الروح 💀', perk: 'الضربة 3 تسرق دم العدو وتشفيك!' },
+  kunglao: { melee: 1.2, ranged: 1.1, speed: 1.05, combo: 'إعصار القبعة 🎩', perk: 'القبعة تدور حولك 3 ثوان بعد الكومبو — درع دوّار!' },
+  johnnycage: { melee: 1.3, ranged: 1.0, speed: 1.05, combo: 'ضربة هوليوود 🕶️', perk: 'ركلة الظل تطير أبعد وأسرع — وتصيب كل الطريق!' },
+  jax: { melee: 1.6, ranged: 0.9, speed: 0.9, combo: 'سحق غوتشا 🦾', perk: 'أثقل لكمات باللعبة +60% — بس أبطأ حركة!' },
+  sonya: { melee: 1.1, ranged: 1.1, speed: 1.15, combo: 'قبلة الموت 💖', perk: 'أسرع مقاتلة: الكومبو كامل بنص الوقت!' },
+  kano: { melee: 1.2, ranged: 1.0, speed: 1.0, combo: 'عين الليزر 👁️', perk: 'الضربة 3 تطلق ليزر فوري يخترق كل الصف!' },
+  jade: { melee: 1.0, ranged: 1.2, speed: 1.1, combo: 'رقصة الظل 🪃', perk: 'بعد الكومبو تختفي ثانيتين — الأعداء ما يشوفوك!' },
+  mileena: { melee: 1.4, ranged: 1.0, speed: 1.05, combo: 'وليمة الأنياب 👄', perk: 'الضربة 3 تعض وتشفيك من دم العدو!' },
+  ermac: { melee: 1.0, ranged: 1.3, speed: 0.95, combo: 'سحق ذهني 🔴', perk: 'الضربة 3 ترفع كل الأعداء بالهواء معاً!' },
+  smoke: { melee: 1.1, ranged: 1.0, speed: 1.1, combo: 'خنق الدخان 💨', perk: 'الكومبو يخليك دخان — تمر من خلال الأعداء بلا ضرر!' },
+  rain: { melee: 1.0, ranged: 1.3, speed: 1.0, combo: 'طوفان إيدينيا 🌧️', perk: 'الضربة 3 مطر يشفيك + يبطّئ الأعداء!' },
+  sindel: { melee: 0.9, ranged: 1.4, speed: 1.0, combo: 'صرخة الملكة 📢', perk: 'الصرخة تدوّخ الزعماء مرتين أطول!' },
+  nightwolf: { melee: 1.2, ranged: 1.1, speed: 1.0, combo: 'غضب الذئب 🐺', perk: 'الضربة 3 تستدعي سهم روح إضافي تلقائياً!' },
+  kabal: { melee: 1.2, ranged: 1.0, speed: 1.25, combo: 'نوماد داش ⚡', perk: 'أسرع ركض باللعبة — الداش أطول 50%!' },
+  sheeva: { melee: 1.5, ranged: 0.9, speed: 0.9, combo: 'زلزال شيفا 👊', perk: '4 أذرع: الضربة 3 تهز الشاشة وتسقط كل القريبين!' },
+  quanchi: { melee: 0.9, ranged: 1.3, speed: 0.95, combo: 'لعنة النذر 🔮', perk: 'الضربة 3 تلعن العدو — ياخد ضعف الضرر 5 ثوان!' },
+  fujin: { melee: 1.1, ranged: 1.2, speed: 1.1, combo: 'إعصار السماء 🌪️', perk: 'الكومبو يرفعك بالهواء — كومبو جوي إضافي!' },
+  striker: { melee: 1.1, ranged: 1.2, speed: 1.0, combo: 'مداهمة SWAT 🚔', perk: 'الضربة 3 قنبلة صوتية تدوّخ كل الشاشة!' },
+  goro: { melee: 1.7, ranged: 1.0, speed: 0.85, combo: 'سحق الأمير 👹', perk: 'ملك الوحوش: +70% لكمات — 4 أذرع تدمر كلشي!' },
+  kintaro: { melee: 1.6, ranged: 1.0, speed: 0.9, combo: 'غضب النمر 🐯', perk: 'نار النمر تحرق: اللكمات تشعل الأعداء!' },
+  shaokahn: { melee: 1.8, ranged: 1.3, speed: 0.9, combo: 'غضب الإمبراطور 🔨', perk: 'إمبراطور العالم السفلي: أقوى مقاتل بكل المقاييس!' },
+};
+
+// --- SHARED ART DIRECTION: one palette per fighter, used by player + enemy painters ---
+export interface FighterArt {
+  skin: string;
+  cowl: string;
+  armor: string;
+  armorDark: string;
+  pants: string;
+  eyes: string;
+  aura: string;
+}
+
+export const FIGHTER_ART: Record<FighterId, FighterArt> = {
+  subzero: { skin: '#e0b296', cowl: '#0a0a14', armor: '#00d2ff', armorDark: '#0088cc', pants: '#121218', eyes: '#ffffff', aura: 'rgba(0, 210, 255, 0.4)' },
+  scorpion: { skin: '#d49b7b', cowl: '#14110b', armor: '#ffb300', armorDark: '#c68400', pants: '#181510', eyes: '#ffffff', aura: 'rgba(255, 120, 0, 0.4)' },
+  noob: { skin: '#09090b', cowl: '#030305', armor: '#18181b', armorDark: '#09090b', pants: '#050508', eyes: '#ffffff', aura: 'rgba(124, 58, 237, 0.5)' },
+  raiden: { skin: '#f5d0b5', cowl: '#e2e8f0', armor: '#38bdf8', armorDark: '#0284c7', pants: '#f8fafc', eyes: '#38bdf8', aura: 'rgba(56, 189, 248, 0.5)' },
+  reptile: { skin: '#4ade80', cowl: '#052e16', armor: '#22c55e', armorDark: '#15803d', pants: '#0f172a', eyes: '#facc15', aura: 'rgba(34, 197, 94, 0.45)' },
+  baraka: { skin: '#c9a186', cowl: '#1c0a0a', armor: '#f43f5e', armorDark: '#881337', pants: '#1c0a0a', eyes: '#fecdd3', aura: 'rgba(244, 63, 94, 0.45)' },
+  liukang: { skin: '#e8b88a', cowl: '#171207', armor: '#f97316', armorDark: '#7c2d12', pants: '#171207', eyes: '#ffffff', aura: 'rgba(249, 115, 22, 0.45)' },
+  kitana: { skin: '#f0c8a8', cowl: '#0a1030', armor: '#60a5fa', armorDark: '#1e3a8a', pants: '#0a1030', eyes: '#dbeafe', aura: 'rgba(96, 165, 250, 0.45)' },
+  shangtsung: { skin: '#d9b896', cowl: '#12081f', armor: '#a855f7', armorDark: '#3b0764', pants: '#12081f', eyes: '#4ade80', aura: 'rgba(168, 85, 247, 0.5)' },
+  kunglao: { skin: '#e8b88a', cowl: '#1a1408', armor: '#eab308', armorDark: '#713f12', pants: '#1a1408', eyes: '#ffffff', aura: 'rgba(234, 179, 8, 0.45)' },
+  johnnycage: { skin: '#f0c8a8', cowl: '#3b2a1a', armor: '#e8b88a', armorDark: '#c98d5e', pants: '#dc2626', eyes: '#0a0a0a', aura: 'rgba(74, 222, 128, 0.45)' },
+  jax: { skin: '#c98d5e', cowl: '#10151f', armor: '#94a3b8', armorDark: '#334155', pants: '#10151f', eyes: '#f8fafc', aura: 'rgba(148, 163, 184, 0.45)' },
+  sonya: { skin: '#f2cfae', cowl: '#160a12', armor: '#f472b6', armorDark: '#831843', pants: '#160a12', eyes: '#fce7f3', aura: 'rgba(244, 114, 182, 0.45)' },
+  kano: { skin: '#d9a06b', cowl: '#101010', armor: '#ef4444', armorDark: '#7f1d1d', pants: '#101010', eyes: '#fca5a5', aura: 'rgba(239, 68, 68, 0.45)' },
+  jade: { skin: '#8a5a3b', cowl: '#052e1b', armor: '#10b981', armorDark: '#065f46', pants: '#052e1b', eyes: '#a7f3d0', aura: 'rgba(16, 185, 129, 0.45)' },
+  mileena: { skin: '#e8b88a', cowl: '#2a0a1a', armor: '#ec4899', armorDark: '#831843', pants: '#2a0a1a', eyes: '#fbcfe8', aura: 'rgba(236, 72, 153, 0.45)' },
+  ermac: { skin: '#b91c1c', cowl: '#0a0a0a', armor: '#dc2626', armorDark: '#450a0a', pants: '#0a0a0a', eyes: '#f87171', aura: 'rgba(220, 38, 38, 0.5)' },
+  smoke: { skin: '#9ca3af', cowl: '#111827', armor: '#6b7280', armorDark: '#1f2937', pants: '#111827', eyes: '#e5e7eb', aura: 'rgba(156, 163, 175, 0.45)' },
+  rain: { skin: '#c99b76', cowl: '#082f49', armor: '#0ea5e9', armorDark: '#0c4a6e', pants: '#082f49', eyes: '#bae6fd', aura: 'rgba(14, 165, 233, 0.45)' },
+  sindel: { skin: '#eed0b0', cowl: '#1e1b2e', armor: '#c084fc', armorDark: '#581c87', pants: '#1e1b2e', eyes: '#e9d5ff', aura: 'rgba(192, 132, 252, 0.45)' },
+  nightwolf: { skin: '#a06a42', cowl: '#14100a', armor: '#a16207', armorDark: '#422006', pants: '#14100a', eyes: '#fef08a', aura: 'rgba(161, 98, 7, 0.45)' },
+  kabal: { skin: '#d9a06b', cowl: '#0a0a0a', armor: '#78716c', armorDark: '#292524', pants: '#0a0a0a', eyes: '#fef08a', aura: 'rgba(120, 113, 108, 0.45)' },
+  sheeva: { skin: '#b07a4f', cowl: '#1c0f0a', armor: '#ea580c', armorDark: '#7c2d12', pants: '#1c0f0a', eyes: '#fdba74', aura: 'rgba(234, 88, 12, 0.45)' },
+  quanchi: { skin: '#cfc0a8', cowl: '#0d0d12', armor: '#65a30d', armorDark: '#1a2e05', pants: '#0d0d12', eyes: '#bef264', aura: 'rgba(101, 163, 13, 0.45)' },
+  fujin: { skin: '#e0b696', cowl: '#f8fafc', armor: '#e2e8f0', armorDark: '#64748b', pants: '#0f172a', eyes: '#0ea5e9', aura: 'rgba(226, 232, 240, 0.45)' },
+  striker: { skin: '#d9a06b', cowl: '#0a1628', armor: '#2563eb', armorDark: '#1e3a8a', pants: '#0a1628', eyes: '#bfdbfe', aura: 'rgba(37, 99, 235, 0.45)' },
+  goro: { skin: '#c68e5a', cowl: '#170c06', armor: '#b45309', armorDark: '#451a03', pants: '#170c06', eyes: '#fde68a', aura: 'rgba(180, 83, 9, 0.5)' },
+  kintaro: { skin: '#b57e4e', cowl: '#140b06', armor: '#dc2626', armorDark: '#450a0a', pants: '#140b06', eyes: '#fecaca', aura: 'rgba(220, 38, 38, 0.5)' },
+  shaokahn: { skin: '#a87648', cowl: '#0c0a08', armor: '#f59e0b', armorDark: '#451a03', pants: '#0c0a08', eyes: '#ef4444', aura: 'rgba(245, 158, 11, 0.5)' },
+};
+
+// --- PROGRESSION: moves unlock by stage index (stage 1 = first level) ---
+export const MOVE_UNLOCK = {
+  dash: 1, // horizontal dash (double-tap left/right)
+  special1: 2, // ranged special button
+  upshift: 3, // upward super shift (double-tap jump)
+  special2: 4, // close special (double-tap punch)
+};
+
+export const MOVE_NAMES: Record<keyof typeof MOVE_UNLOCK, string> = {
+  dash: 'الشفت الخاطف ⚡',
+  special1: 'الضربة البعيدة 🎯',
+  upshift: 'الشيفت العلوي 🚀',
+  special2: 'الحركة القريبة 🌀',
+};
+
+const MAX_STAGE_KEY = 'mmk_maxStage';
+
+export function getMaxStageCleared(): number {
+  try {
+    const v = parseInt(localStorage.getItem(MAX_STAGE_KEY) || '-1', 10);
+    return isNaN(v) ? -1 : v;
+  } catch {
+    return -1;
+  }
+}
+
+export function saveStageCleared(idx: number): FighterId[] {
+  // Returns ids of fighters newly unlocked by this clear (catches up skipped stages too)
+  const old = getMaxStageCleared();
+  if (idx > old) {
+    try {
+      localStorage.setItem(MAX_STAGE_KEY, String(idx));
+    } catch {
+      /* ignore */
+    }
+  }
+  const cur = Math.max(old, idx);
+  const all = Object.entries(FIGHTER_UNLOCK) as [FighterId, number][];
+  return all.filter(([, req]) => req > old && req <= cur + 1).map(([id]) => id);
+}
+
+export function isFighterUnlocked(id: FighterId): boolean {
+  return (FIGHTER_UNLOCK[id] ?? 0) <= getMaxStageCleared() + 1;
+}
+
+export function isMoveUnlocked(move: keyof typeof MOVE_UNLOCK, stageIdx: number): boolean {
+  return stageIdx >= MOVE_UNLOCK[move];
+}
+
+const FIGHTER_KEY = 'mmk_fighter';
+
+export function getSavedFighter(): FighterId | null {
+  try {
+    const v = localStorage.getItem(FIGHTER_KEY);
+    if (v && v in FIGHTER_UNLOCK) return v as FighterId;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+export function saveFighter(id: FighterId): void {
+  try {
+    localStorage.setItem(FIGHTER_KEY, id);
+  } catch {
+    /* ignore */
+  }
+}

@@ -1,4 +1,4 @@
-export type FighterId = 'subzero' | 'scorpion' | 'noob' | 'raiden' | 'reptile';
+export type FighterId = 'subzero' | 'scorpion' | 'noob' | 'raiden' | 'reptile' | 'baraka' | 'liukang' | 'kitana' | 'shangtsung' | 'kunglao' | 'johnnycage' | 'jax' | 'sonya' | 'kano' | 'jade' | 'mileena' | 'ermac' | 'smoke' | 'rain' | 'sindel' | 'nightwolf' | 'kabal' | 'sheeva' | 'quanchi' | 'fujin' | 'striker' | 'goro' | 'kintaro' | 'shaokahn';
 
 export interface FighterConfig {
   id: FighterId;
@@ -30,6 +30,12 @@ export interface Player {
   character: FighterId;
   health: number;
   maxHealth: number;
+  blood: number;
+  maxBlood: number;
+  isBlocking: boolean;
+  isCrouching: boolean;
+  crouchUppercut: boolean;
+  flowerShield?: number;
   lives: number;
   score: number;
   coins: number;
@@ -47,6 +53,8 @@ export interface Player {
   special2Cooldown: number;
   isInvincible: boolean;
   invincibleTimer: number;
+  comboStep?: number; // punch combo position: 0 none, 1 jab, 2 cross, 3 finisher (slow heavy!)
+  comboTimer?: number; // window to chain the next punch
   powerUp: 'none' | 'mushroom' | 'flower';
   powerUpTimer: number;
   animationFrame: number;
@@ -55,8 +63,18 @@ export interface Player {
 
 export interface Enemy {
   id: number;
-  type: 'goomba' | 'koopa' | 'piranha' | 'bowser' | 'rival_ninja';
-  rivalFighter?: FighterId;
+  type: 'goomba' | 'koopa' | 'piranha' | 'bowser' | 'rival_ninja' | 'kombatant' | 'fighter_boss' | 'hammerbro' | 'spiny';
+  fighterKind?: FighterId;
+  isBoss?: boolean;
+  isDizzy?: boolean;
+  dizzyTimer?: number;
+  meleeCooldown?: number;
+  enemyBlockTimer?: number;
+  strikeTimer?: number;
+  inShell?: boolean;
+  shellVx?: number;
+  shellTimer?: number;
+  homeX?: number;
   x: number;
   y: number;
   vx: number;
@@ -85,6 +103,8 @@ export interface Block {
   height: number;
   type: 'question' | 'brick' | 'stone' | 'pipe' | 'pipe_top' | 'lava' | 'bridge' | 'axe';
   content?: 'coin' | 'mushroom' | 'flower' | 'empty';
+  isWarp?: boolean;
+  warpTo?: { x: number; y: number };
   isHit?: boolean;
   bounceOffset?: number;
   isDestroyed?: boolean;
@@ -106,7 +126,7 @@ export interface Item {
 
 export interface Projectile {
   id: number;
-  type: 'ice_blast' | 'spear' | 'shadow_clone' | 'shadow_ball' | 'bowser_fire' | 'fireball' | 'lightning' | 'acid_spit';
+  type: 'ice_blast' | 'spear' | 'shadow_clone' | 'shadow_ball' | 'bowser_fire' | 'fireball' | 'lightning' | 'acid_spit' | 'blade_spark' | 'dragon_fire' | 'steel_fan' | 'soul_skull' | 'razor_hat' | 'cage_bolt' | 'shockwave' | 'energy_ring' | 'hammer' | 'kano_knife' | 'jade_rang' | 'mileena_sai' | 'rain_ball' | 'wolf_arrow' | 'fujin_wind' | 'striker_nade';
   x: number;
   y: number;
   vx: number;
@@ -119,6 +139,7 @@ export interface Projectile {
   active: boolean;
   facing: 'left' | 'right';
   effect?: 'freeze' | 'pull' | 'tackle';
+  grav?: number;
 }
 
 export interface Particle {
@@ -150,7 +171,7 @@ export interface LevelData {
   level: number;
   name: string;
   nameAr: string;
-  theme: 'overworld' | 'underground' | 'castle' | 'desert' | 'airship' | 'netherrealm';
+  theme: 'overworld' | 'underground' | 'castle' | 'desert' | 'airship' | 'netherrealm' | 'forest' | 'pit';
   width: number;
   height: number;
   startX: number;
