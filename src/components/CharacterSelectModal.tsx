@@ -1,6 +1,6 @@
 import React from 'react';
 import { FighterId } from '../types';
-import { FIGHTERS, FIGHTER_UNLOCK, isFighterUnlocked } from '../game/characters';
+import { FIGHTERS, FIGHTER_UNLOCK, FIGHTER_TRAITS, isFighterUnlocked } from '../game/characters';
 import { soundManager } from '../audio/soundEffects';
 
 interface CharacterSelectModalProps {
@@ -9,6 +9,7 @@ interface CharacterSelectModalProps {
   onStartGame: () => void;
   isOpen: boolean;
   onOpenGuide?: () => void;
+  onOpenStages?: () => void;
 }
 
 export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
@@ -17,6 +18,7 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
   onStartGame,
   isOpen,
   onOpenGuide,
+  onOpenStages,
 }) => {
   if (!isOpen) return null;
 
@@ -55,13 +57,13 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
             اختر مقاتلك للمغامرة
           </h1>
           <p className="text-xs text-neutral-400">
-            اسحب أفقياً لتصفح المقاتلين الـ13 👉 المقفل ينفتح بالفوز بالمراحل
+            اسحب أفقياً لتصفح المقاتلين الـ29 👉 المقفل ينفتح بالترتيب: كل مرحلة تكسبها تفتح المقاتل التالي!
           </p>
         </div>
 
         {/* Fighter Cards — swipe carousel on mobile, fixed-height scroll grid on desktop (never squashed) */}
-        <div className="flex sm:grid sm:grid-cols-3 shrink-0 gap-2.5 sm:gap-3 overflow-x-auto sm:overflow-y-auto sm:overflow-x-hidden h-[172px] sm:h-[46vh] snap-x snap-mandatory sm:snap-none pb-2 sm:pb-1 -mx-1 px-1">
-          {fighters.map(fighter => {
+        <div className="flex sm:grid sm:grid-cols-3 landscape:grid-cols-4 shrink-0 gap-2.5 sm:gap-3 overflow-x-auto sm:overflow-y-auto sm:overflow-x-hidden h-[172px] sm:h-[42vh] landscape:h-[38vh] snap-x snap-mandatory sm:snap-none pb-2 sm:pb-1 -mx-1 px-1">
+          {fighters.map((fighter, fi) => {
             const isSelected = effectiveFighter === fighter.id;
             const locked = !isFighterUnlocked(fighter.id);
             return (
@@ -108,10 +110,10 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                 {/* Special move highlight */}
                 <div className="mt-4 pt-3 border-t border-neutral-800 space-y-1">
                   <span className="text-[10px] font-bold text-amber-400 block">
-                    {fighter.id === 'noob' ? '✨ حركة محدثة:' : 'المهارة الرئيسية:'}
+                    {locked ? '🔒 ترتيب الفتح:' : 'الكومبو القاضي:'}
                   </span>
                   <span className="text-xs font-bold text-neutral-200 block truncate">
-                    {locked ? `يفتح بالمرحلة ${FIGHTER_UNLOCK[fighter.id] + 1} 🏆` : fighter.special1Name}
+                    {locked ? `المقاتل رقم ${fi + 1} — يفتح بالمرحلة ${FIGHTER_UNLOCK[fighter.id] + 1} 🏆` : FIGHTER_TRAITS[fighter.id].combo}
                   </span>
                 </div>
               </button>
@@ -140,6 +142,18 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
             {current.description}
           </p>
 
+          <div className="bg-amber-950/50 border border-amber-700/60 p-3 rounded-lg space-y-1">
+            <span className="text-[11px] font-black text-amber-300 block">
+              ⚡ ميزة {current.nameAr}: {FIGHTER_TRAITS[current.id].combo}
+            </span>
+            <p className="text-xs text-amber-100/90 leading-normal">
+              {FIGHTER_TRAITS[current.id].perk}
+            </p>
+            <p className="text-[10px] text-neutral-400 font-mono" dir="ltr">
+              melee x{FIGHTER_TRAITS[current.id].melee} • ranged x{FIGHTER_TRAITS[current.id].ranged} • speed x{FIGHTER_TRAITS[current.id].speed}
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-neutral-950/70 border border-neutral-800/80 p-3 rounded-lg">
               <span className="text-[11px] font-bold text-cyan-400 block mb-1">
@@ -162,6 +176,16 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-2.5">
+          {onOpenStages && (
+            <button
+              id="btn-open-stages-select"
+              onClick={onOpenStages}
+              className="py-3.5 px-5 rounded-xl bg-emerald-900 hover:bg-emerald-800 active:scale-[0.99] text-emerald-100 border border-emerald-600 font-bold text-sm transition-all flex items-center justify-center gap-2"
+            >
+              <span>🗺️</span>
+              <span>المراحل</span>
+            </button>
+          )}
           {onOpenGuide && (
             <button
               id="btn-open-guide-select"

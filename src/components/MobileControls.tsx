@@ -201,8 +201,8 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
         return {
           rangedName: 'كرة كيج 🕶️',
           rangedSub: 'Cage Bolt',
-          closeName: 'لكمة الظل 👊',
-          closeShort: 'ظل 👊',
+          closeName: 'ركلة الظل 🦵',
+          closeShort: 'ظل 🦵',
           rangedTheme:
             'bg-green-950/90 border-green-400 text-green-100 shadow-[0_0_14px_rgba(74,222,128,0.45)]',
         };

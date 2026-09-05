@@ -11,6 +11,7 @@ interface GameHUDProps {
   bossEnemy: Enemy | null;
   onOpenGuide: () => void;
   onOpenSelectFighter: () => void;
+  onOpenStages?: () => void;
   onToggleSound: () => void;
   isMuted: boolean;
   onTogglePause: () => void;
@@ -26,6 +27,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   bossEnemy,
   onOpenGuide,
   onOpenSelectFighter,
+  onOpenStages,
   onToggleSound,
   isMuted,
   isPaused,
@@ -39,7 +41,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   return (
     <div
       id="game-hud"
-      className="absolute top-0 inset-x-0 z-30 pointer-events-none p-2 sm:p-3 flex flex-col gap-2 font-mono"
+      className="absolute top-0 inset-x-0 z-50 pointer-events-none p-2 sm:p-3 flex flex-col gap-2 font-mono"
     >
       {/* Top Header Row */}
       <div className="flex items-center justify-between text-xs sm:text-sm text-white font-black drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
@@ -108,12 +110,22 @@ export const GameHUD: React.FC<GameHUDProps> = ({
 
         {/* Right: Controls & Guide Quick Actions */}
         <div className="flex items-center gap-1.5 pointer-events-auto">
+          {/* Stages map button (progress + jump to any cleared stage) */}
+          <button
+            id="btn-open-stages-hud"
+            onClick={onOpenStages}
+            title="خريطة المراحل والتقدم"
+            className="px-2.5 py-1.5 min-h-[44px] landscape:min-h-[44px] rounded-lg bg-emerald-900/80 hover:bg-emerald-800 active:scale-95 border border-emerald-500/80 text-emerald-100 text-xs font-bold flex items-center gap-1 transition-all backdrop-blur-sm shadow-md"
+          >
+            <span>🗺️</span>
+            <span className="hidden sm:inline">المراحل</span>
+          </button>
           {/* Guide & Diagrams button */}
           <button
             id="btn-open-guide-hud"
             onClick={onOpenGuide}
             title="دليل اللعبة والمخططات التفاعلية"
-            className="px-2.5 py-1 rounded-lg bg-indigo-900/80 hover:bg-indigo-800 active:scale-95 border border-indigo-500/80 text-indigo-100 text-xs font-bold flex items-center gap-1 transition-all backdrop-blur-sm shadow-md"
+            className="px-2.5 py-1.5 min-h-[44px] rounded-lg bg-indigo-900/80 hover:bg-indigo-800 active:scale-95 border border-indigo-500/80 text-indigo-100 text-xs font-bold flex items-center gap-1 transition-all backdrop-blur-sm shadow-md"
           >
             <span>📊</span>
             <span className="hidden sm:inline">المخططات والشرح</span>
@@ -124,7 +136,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             id="btn-change-fighter-hud"
             onClick={onOpenSelectFighter}
             title="تغيير المقاتل"
-            className="px-2 py-1 rounded-lg bg-neutral-900/80 hover:bg-neutral-800 active:scale-95 border border-neutral-700 text-neutral-200 text-xs font-bold transition-all backdrop-blur-sm"
+            className="px-2 py-1.5 min-h-[44px] rounded-lg bg-neutral-900/80 hover:bg-neutral-800 active:scale-95 border border-neutral-700 text-neutral-200 text-xs font-bold transition-all backdrop-blur-sm"
           >
             🥋
           </button>
@@ -134,7 +146,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             id="btn-toggle-sound-hud"
             onClick={onToggleSound}
             title="كتم/تشغيل الصوت"
-            className="p-1.5 rounded-lg bg-neutral-900/80 hover:bg-neutral-800 active:scale-95 border border-neutral-700 text-neutral-200 text-xs font-bold transition-all backdrop-blur-sm"
+            className="p-1.5 min-h-[44px] min-w-[44px] rounded-lg bg-neutral-900/80 hover:bg-neutral-800 active:scale-95 border border-neutral-700 text-neutral-200 text-xs font-bold transition-all backdrop-blur-sm"
           >
             {isMuted ? '🔇' : '🔊'}
           </button>
@@ -143,7 +155,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           <button
             id="btn-pause-game-hud"
             onClick={onTogglePause}
-            className="p-1.5 rounded-lg bg-neutral-900/80 hover:bg-neutral-800 active:scale-95 border border-neutral-700 text-neutral-200 text-xs font-bold transition-all backdrop-blur-sm"
+            className="p-1.5 min-h-[44px] min-w-[44px] rounded-lg bg-neutral-900/80 hover:bg-neutral-800 active:scale-95 border border-neutral-700 text-neutral-200 text-xs font-bold transition-all backdrop-blur-sm"
           >
             {isPaused ? '▶️' : '⏸️'}
           </button>

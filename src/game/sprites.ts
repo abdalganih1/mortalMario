@@ -547,12 +547,26 @@ export class SpriteRenderer {
       ctx.fillRect(-16, topY, 6, 2.4);
       ctx.fillRect(-18, topY + 2, 4, 8);
     } else if (character === 'johnnycage') {
-      // Hollywood shades
-      ctx.fillStyle = '#052e16';
-      ctx.fillRect(-5, topY + 5, 13, 4);
-      ctx.fillStyle = 'rgba(74,222,128,0.7)';
-      ctx.fillRect(-4, topY + 5.6, 4, 2);
-      ctx.fillRect(2, topY + 5.6, 4, 2);
+      // HOLLYWOOD STAR: black hair (no ninja cowl!), big dark sunglasses with shine
+      ctx.fillStyle = '#3b2a1a';
+      ctx.fillRect(-8, topY - 6, 16, 6);
+      ctx.fillRect(-8, topY - 6, 3, 10);
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(-7, topY + 4, 15, 5);
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(-1, topY + 5.5, 2, 2.4);
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillRect(-5, topY + 4.6, 4, 1.6);
+      ctx.fillRect(3, topY + 4.6, 3, 1.6);
+      // Smug grin
+      ctx.fillStyle = '#7c2d12';
+      ctx.fillRect(-3, topY + 12, 7, 1.8);
+      // Open white shirt + red pants vibe on torso
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(-9, topY + 18, 4, 12);
+      ctx.fillRect(5, topY + 18, 4, 12);
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(-5, topY + 26, 10, 4);
     } else if (character === 'sonya') {
       // High ponytail
       ctx.fillStyle = '#fbbf24';

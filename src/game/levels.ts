@@ -611,6 +611,14 @@ function buildClassicLevels(): LevelData[] {
   for (let i = 0; i < TOTAL; i++) {
     const stageNo = 9 + i; // human stage number (1-based)
     const r = mulberry(4243 + i * 131);
+    // Re-shuffle the pool per stage so the cast rotates every stage
+    const pool = [...gruntKinds];
+    for (let s = pool.length - 1; s > 0; s--) {
+      const j = Math.floor(r() * (s + 1));
+      [pool[s], pool[j]] = [pool[j], pool[s]];
+    }
+    const poolSize = Math.min(pool.length, 5 + Math.floor((i / (TOTAL - 1)) * 12));
+    const stagePool = pool.slice(0, poolSize);
     const theme = themes[i % themes.length];
     const diff = i / (TOTAL - 1); // 0 easy .. 1 brutal
     const width = 3000 + Math.floor(r() * 700);
@@ -619,11 +627,20 @@ function buildClassicLevels(): LevelData[] {
     const blocks: Block[] = [];
     const enemies: LevelData['enemies'] = [];
     const isBossStage = i % 10 === 9;
+    // Lava-gap intervals (start/end x) — enemies NEVER spawn inside these
+    const lavaGaps: Array<{ s: number; e: number }> = [];
+    const inLava = (x: number, pad = 30) => lavaGaps.some(g => x > g.s - pad && x < g.e + pad);
 
     const addGrunt = (x: number, y: number) => {
+      // Lava-safe: shift spawns out of pits so nothing is born to die
+      if (inLava(x)) {
+        const g = lavaGaps.find(gg => x > gg.s - 30 && x < gg.e + 30);
+        x = g ? g.e + 50 : x + 120;
+      }
+      if (x > endArena - 60) return;
       const roll = r();
       if (i >= 10 && roll < 0.12 + diff * 0.25) {
-        const kind = gruntKinds[Math.floor(r() * gruntKinds.length)];
+        const kind = stagePool[Math.floor(r() * stagePool.length)];
         enemies.push({ type: 'kombatant', fighterKind: kind, x, y: 390, vx: -1.1, vy: 0, width: 32, height: 48, health: 4 + Math.floor(diff * 3), maxHealth: 4 + Math.floor(diff * 3), facing: 'left' });
       } else if (i >= 6 && roll < 0.3) {
         enemies.push({ type: roll < 0.2 ? 'spiny' : 'hammerbro', x, y: 398, vx: -1.0, vy: 0, width: 30, height: 32, health: 2, maxHealth: 2, facing: 'left' });
@@ -634,10 +651,35 @@ function buildClassicLevels(): LevelData[] {
       }
     };
 
-    // Safe runway + starter row (classic 1-1 homage opening)
+    // VARIED OPENINGS: 4 different starts rotating by stage (never the same twice in a row)
+    const opening = i % 4;
     blocks.push(...createGround(0, 700, 440, 40, 'stone'));
-    blocks.push(...rowBlocks(260, 320, '?B?B?'));
-    addGrunt(430, 400);
+    if (opening === 0) {
+      // Classic 1-1 homage: block row + goomba
+      const openers = ['?B?B?', 'BMB', '?F?', 'B?B'];
+      blocks.push(...rowBlocks(260, 320, openers[Math.floor(r() * openers.length)]));
+      addGrunt(430, 400);
+    } else if (opening === 1) {
+      // Pipe garden start: two pipes, piranha in one
+      blocks.push({ id: nid(), x: 300, y: 360, width: 48, height: 80, type: 'pipe' });
+      blocks.push({ id: nid(), x: 470, y: 330, width: 48, height: 110, type: 'pipe' });
+      if (r() < 0.7) enemies.push({ type: 'piranha', x: 478, y: 298, vx: 0, vy: 0, width: 32, height: 32, health: 2, maxHealth: 2, facing: 'left' });
+      blocks.push(...rowBlocks(220, 220, r() < 0.5 ? '?M?' : '?F?'));
+      addGrunt(600, 400);
+    } else if (opening === 2) {
+      // Stair skirmish start: small pyramid + guards both sides
+      blocks.push(...createStairs(280, 440, 3, 32, 1));
+      blocks.push(...createStairs(280 + 3 * 32, 440, 3, 32, -1));
+      blocks.push(...rowBlocks(300, 440 - 4 * 32, '?'));
+      addGrunt(180, 400);
+      addGrunt(560, 400);
+    } else {
+      // High-road start: sky platform with rewards, guard below
+      blocks.push({ id: nid(), x: 200, y: 290, width: 340, height: 28, type: 'stone' });
+      blocks.push(...rowBlocks(260, 230, r() < 0.5 ? '?F?' : '?M?'));
+      addGrunt(240, 400);
+      addGrunt(320, 245);
+    }
 
     let x = 700;
     let pipes = 0;
@@ -647,6 +689,7 @@ function buildClassicLevels(): LevelData[] {
         // Lava pit gap (wider when harder) with high detour on big ones
         const gap = Math.floor(90 + r() * (90 + diff * 130));
         blocks.push(...createGround(x, gap, 450, 30, 'lava'));
+        lavaGaps.push({ s: x, e: x + gap });
         if (gap > 150) blocks.push({ id: nid(), x: x + gap / 2 - 60, y: 300, width: 120, height: 28, type: 'stone' });
         x += gap;
       } else if (roll < 0.44) {

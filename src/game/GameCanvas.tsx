@@ -13,7 +13,7 @@ import {
 import { LEVEL_DEFINITIONS } from './levels';
 import { SpriteRenderer } from './sprites';
 import { soundManager } from '../audio/soundEffects';
-import { saveStageCleared, isMoveUnlocked, MOVE_UNLOCK, MOVE_NAMES, FIGHTERS } from './characters';
+import { saveStageCleared, isMoveUnlocked, MOVE_UNLOCK, MOVE_NAMES, FIGHTERS, FIGHTER_TRAITS } from './characters';
 import { MobileControls } from '../components/MobileControls';
 import { GameHUD } from '../components/GameHUD';
 
@@ -23,6 +23,10 @@ interface GameCanvasProps {
   onOpenSelectFighter: () => void;
   gameState: GameState;
   setGameState: React.Dispatch<React.SetStateAction<GameState>>;
+  onFighterUnlocked?: (id: FighterId) => void;
+  stageRequest?: { idx: number; nonce: number } | null;
+  onOpenStages?: () => void;
+  onStageChange?: (idx: number) => void;
 }
 
 export const GameCanvas: React.FC<GameCanvasProps> = ({
@@ -31,7 +35,15 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   onOpenSelectFighter,
   gameState,
   setGameState,
+  onFighterUnlocked,
+  stageRequest,
+  onOpenStages,
+  onStageChange,
 }) => {
+  const unlockCbRef = useRef<((id: FighterId) => void) | undefined>(onFighterUnlocked);
+  unlockCbRef.current = onFighterUnlocked;
+  const stageChgRef = useRef<((idx: number) => void) | undefined>(onStageChange);
+  stageChgRef.current = onStageChange;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Level progression state
@@ -231,6 +243,39 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       attackTimer: 0,
       fighterKind: e.type === 'rival_ninja' || e.type === 'kombatant' || e.type === 'fighter_boss' ? (e.fighterKind || assignedRival) : e.fighterKind,
     }));
+    // SPAWN SNAP: drop every walker onto solid ground; drag out of lava voids.
+    // (Kills floaters + lava-born die/respawn loops at the source.)
+    enemiesRef.current.forEach(e => {
+      if (e.type === 'piranha') return; // pipe-anchored, stays
+      const groundAt = (x: number): number | null => {
+        let land: number | null = null;
+        blocksRef.current.forEach(b => {
+          if (b.isDestroyed || b.type === 'lava') return;
+          if (x + e.width > b.x + 4 && x < b.x + b.width - 4 && b.y >= e.y + e.height - 40) {
+            if (land === null || b.y < land) land = b.y;
+          }
+        });
+        return land;
+      };
+      let land = groundAt(e.x);
+      if (land === null) {
+        // Void below (lava pit): step back to safety
+        let nx = e.x;
+        for (let t = 0; t < 14 && land === null; t++) {
+          nx -= 40;
+          land = groundAt(nx);
+        }
+        if (land !== null) e.x = Math.max(40, nx);
+        else {
+          e.x = levelDef.startX + 140;
+          land = groundAt(e.x);
+        }
+      }
+      if (land !== null) {
+        e.y = land - e.height;
+        e.vy = 0;
+      }
+    });
     itemsRef.current = [];
     projectilesRef.current = [];
     particlesRef.current = [];
@@ -261,6 +306,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     setTimeRemaining(400);
     setCurrentLevelIndex(levelIdx);
     levelIdxRef.current = levelIdx;
+    try {
+      stageChgRef.current?.(levelIdx);
+    } catch {
+      /* ignore */
+    }
 
     // Spawn protection: 2s shield so bosses can't spawn-kill you
     playerRef.current.isInvincible = true;
@@ -270,10 +320,25 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     setBossEnemyState(boss || null);
   }, []);
 
+  // Keep the engine fighter in sync with the picked character
+  useEffect(() => {
+    playerRef.current.character = character;
+  }, [character]);
+
   // Initialize first level
   useEffect(() => {
     loadLevel(currentLevelIndex);
   }, [loadLevel, currentLevelIndex]);
+
+  // STAGES MENU jump: enter any cleared stage instantly
+  useEffect(() => {
+    if (stageRequest && stageRequest.idx >= 0 && stageRequest.idx < LEVEL_DEFINITIONS.length) {
+      setUnlockedNow([]);
+      loadLevel(stageRequest.idx);
+      setGameState('playing');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stageRequest]);
 
   // Handle Keyboard inputs
   useEffect(() => {
@@ -553,8 +618,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       p.isInvincible = true;
       p.invincibleTimer = 0.4;
 
-      // Instant forward surge in facing direction
-      const speed = 10.0;
+      // Instant forward surge in facing direction (Kabal: +50% nomad dash!)
+      const speed = 10.0 * (p.character === 'kabal' ? 1.5 : 1);
       p.vx = p.facing === 'right' ? speed : -speed;
       soundManager.playDash();
 
@@ -599,7 +664,15 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       const isCrouchHit = keysRef.current.down && p.isGrounded;
       const isUppercut = keysRef.current.jump || !p.isGrounded || isCrouchHit;
       p.crouchUppercut = isCrouchHit;
-      p.attackTimer = isUppercut ? 0.35 : 0.25;
+      // 3-HIT COMBO CHAIN: jab -> cross -> SLOW signature finisher (1.1s chain window)
+      const nowC = performance.now() / 1000;
+      const trait = FIGHTER_TRAITS[p.character] || FIGHTER_TRAITS.subzero;
+      const chaining = !isUppercut && (p.comboTimer || 0) > nowC && (p.comboStep || 0) > 0;
+      const comboStep = isUppercut ? 0 : chaining ? Math.min(3, (p.comboStep || 0) + 1) : 1;
+      p.comboStep = comboStep;
+      p.comboTimer = isUppercut ? 0 : nowC + 1.1;
+      const isFinisher = comboStep === 3;
+      p.attackTimer = isFinisher ? 0.55 : isUppercut ? 0.35 : 0.25;
       p.attackType = isUppercut ? 'uppercut' : 'punch';
 
       if (isUppercut) {
@@ -650,8 +723,19 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           attackY + (isUppercut ? 50 : 30) > e.y
         ) {
           hitAny = true;
-          const damage = p.crouchUppercut ? 3 : isUppercut ? 2 : 1;
+          const comboMult = p.comboStep === 3 ? 2.1 : p.comboStep === 2 ? 1.35 : 1;
+          const t2 = FIGHTER_TRAITS[p.character] || FIGHTER_TRAITS.subzero;
+          const damage = Math.max(1, Math.round((p.crouchUppercut ? 3 : isUppercut ? 2 : 1) * (isUppercut ? 1 : t2.melee) * comboMult));
           applyDamageToEnemy(e, damage, isUppercut ? 'uppercut' : 'punch');
+          if (p.comboStep === 3 && e.isAlive) {
+            // Heavy finisher: brutal knockback, dizzy on fighters (worth the slow wind-up!)
+            e.vx = p.facing === 'right' ? 6 : -6;
+            if (e.type !== 'bowser') e.vy = -4.5;
+            if (e.type === 'kombatant' || e.type === 'fighter_boss' || e.type === 'rival_ninja') {
+              e.isDizzy = true;
+              e.dizzyTimer = 1.8;
+            }
+          }
 
           if (isUppercut && e.isAlive) {
             // Launch enemy high into air with classic Mortal Kombat uppercut arc!
@@ -665,6 +749,23 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           }
         }
       });
+
+      if (isFinisher && hitAny) {
+        screenShakeRef.current = Math.max(screenShakeRef.current, 8);
+        soundManager.playUppercut();
+        floatingTextsRef.current.push({
+          id: Math.random(),
+          text: `COMBO x3! ${trait.combo}`,
+          x: p.x + p.width / 2,
+          y: p.y - 20,
+          vy: -1.8,
+          color: '#fbbf24',
+          alpha: 1,
+          scale: 1.5,
+        });
+        p.comboStep = 0;
+        p.comboTimer = 0;
+      }
 
       if (isUppercut) {
         floatingTextsRef.current.push({
@@ -1527,13 +1628,19 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           }
         });
       } else if (p.character === 'johnnycage') {
-        // --- JOHNNY CAGE SHADOW UPPERCUT: the famous one! ---
-        soundManager.playUppercut();
+        // --- JOHNNY CAGE SHADOW KICK: THE famous flying kick! leg out, green trail! ---
+        soundManager.playTorpedo();
         screenShakeRef.current = 9;
+        p.isDashing = true;
+        p.dashTimer = 0.55;
+        p.isInvincible = true;
+        p.invincibleTimer = 0.6;
+        p.vy = -1.5;
+        p.vx = p.facing === 'right' ? 12.5 : -12.5;
 
         floatingTextsRef.current.push({
           id: Math.random(),
-          text: "SHADOW UPPERCUT! HERE'S JOHNNY! 🕶️",
+          text: "SHADOW KICK! HERE'S JOHNNY! 🕶️🦵",
           x: p.x,
           y: p.y - 14,
           vy: -1.6,
@@ -1542,12 +1649,28 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           scale: 1.4,
         });
 
+        // Green Hollywood trail
+        for (let i = 0; i < 10; i++) {
+          particlesRef.current.push({
+            id: Math.random(),
+            x: p.x + p.width / 2,
+            y: p.y + Math.random() * p.height,
+            vx: (Math.random() - 0.5) * 3,
+            vy: (Math.random() - 0.5) * 2,
+            color: '#4ade80',
+            size: Math.random() * 6 + 3,
+            alpha: 1,
+            decay: 0.06,
+            shape: 'spark',
+          });
+        }
+
         enemiesRef.current.forEach(e => {
-          if (e.isAlive && Math.abs(e.x - p.x) < 80 && Math.abs(e.y - p.y) < 65) {
-            applyDamageToEnemy(e, 3, 'uppercut');
+          if (e.isAlive && Math.abs(e.x - p.x) < 110 && Math.abs(e.y - p.y) < 60) {
+            applyDamageToEnemy(e, 3, 'dash_tackle');
             if (e.isAlive) {
-              e.vy = -10;
-              e.vx = p.facing === 'right' ? 3.5 : -3.5;
+              e.vy = -7;
+              e.vx = p.facing === 'right' ? 5 : -5;
               if (e.type === 'kombatant' || e.type === 'fighter_boss' || e.type === 'rival_ninja') {
                 e.isDizzy = true;
                 e.dizzyTimer = 2.0;
@@ -1829,7 +1952,29 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
     // DEFENSE: holding block on the ground absorbs almost everything (chip damage only)
     if (p.isBlocking && p.isGrounded) {
-      const chip = Math.max(1, Math.round(dmg * 0.1));
+      // Blockstun guard: a touch-enemy grinding through you can't melt your blood
+      p.isInvincible = true;
+      p.invincibleTimer = Math.max(p.invincibleTimer, 0.55);
+      // SHOVE: touch-enemies bounce OFF a blocking fighter — never walk through you!
+      enemiesRef.current.forEach(e => {
+        if (!e.isAlive || e.type === 'bowser') return;
+        if (
+          p.x < e.x + e.width &&
+          p.x + p.width > e.x &&
+          p.y < e.y + e.height &&
+          p.y + p.height > e.y
+        ) {
+          const dir = p.x + p.width / 2 < e.x + e.width / 2 ? 1 : -1;
+          e.x += dir * 26;
+          if (e.type === 'goomba' || e.type === 'koopa' || e.type === 'hammerbro' || e.type === 'spiny') {
+            e.vx = dir * Math.max(1.2, Math.abs(e.vx || 1.2));
+            e.facing = dir > 0 ? 'right' : 'left';
+          } else {
+            e.vx = dir * 2.2;
+          }
+        }
+      });
+      const chip = 1; // flat 1 chip — blocking is a real guard now
       p.blood = Math.max(0, p.blood - chip);
       p.health = Math.max(1, Math.ceil((p.blood / p.maxBlood) * 3));
       soundManager.playBlock();
@@ -1970,6 +2115,15 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     // Persist progress + reveal newly unlocked fighters!
     const newly = saveStageCleared(levelIdxRef.current);
     setUnlockedNow(newly);
+    // INSTANT PLAY: the first newly-unlocked fighter becomes yours immediately!
+    if (newly.length > 0) {
+      playerRef.current.character = newly[0];
+      try {
+        unlockCbRef.current?.(newly[0]);
+      } catch {
+        /* ignore */
+      }
+    }
     setGameState('stage_clear');
   };
 
@@ -2152,7 +2306,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     p.isCrouching = !!keys.down && p.isGrounded && !p.isDashing && !p.isSliding && !p.isBlocking;
 
     const accel = 0.8;
-    const maxSpeed = 4.2;
+    const traitSpd = (FIGHTER_TRAITS[p.character] || FIGHTER_TRAITS.subzero).speed;
+    const maxSpeed = 4.2 * traitSpd;
     const friction = 0.82;
     const gravity = 0.52;
 
@@ -2946,6 +3101,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             });
           }
         }
+        // Fell in a pit: dead for good — no respawn loops
+        if (enemy.y > levelDef.height + 60) enemy.isAlive = false;
       } else if (enemy.type === 'piranha') {
         // Piranha snaps up and down from pipe
         enemy.animationTimer += dt * 2;
@@ -3019,21 +3176,60 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           if (enemy.y > levelDef.height + 60) enemy.isAlive = false;
         }
       } else {
-        // Goomba / Koopa walking
+        // Goomba / Koopa walking — real gravity, ledge-aware, lava = permanent death
+        enemy.vy = (enemy.vy || 0) + 0.5;
+        if (enemy.vy > 10) enemy.vy = 10;
         enemy.x += enemy.vx;
-        // Turn around at ledge or wall
+        enemy.y += enemy.vy;
+        let wGrounded = false;
         blocksRef.current.forEach(block => {
           if (block.isDestroyed || block.type === 'lava' || block.type === 'bridge') return;
+          if (
+            (enemy.vy || 0) >= 0 &&
+            enemy.x + enemy.width > block.x + 2 &&
+            enemy.x < block.x + block.width - 2 &&
+            enemy.y + enemy.height > block.y &&
+            enemy.y + enemy.height - (enemy.vy || 0) <= block.y + 10
+          ) {
+            enemy.y = block.y - enemy.height;
+            enemy.vy = 0;
+            wGrounded = true;
+          }
           if (
             enemy.x < block.x + block.width &&
             enemy.x + enemy.width > block.x &&
             enemy.y < block.y + block.height &&
-            enemy.y + enemy.height > block.y
+            enemy.y + enemy.height > block.y + 6
           ) {
             enemy.vx = -enemy.vx;
             enemy.facing = enemy.vx > 0 ? 'right' : 'left';
+            if (enemy.x + enemy.width / 2 < block.x + block.width / 2) enemy.x = block.x - enemy.width;
+            else enemy.x = block.x + block.width;
           }
         });
+        // Ledge: turn around instead of marching into pits/lava
+        if (wGrounded) {
+          const dir = (enemy.vx || 0) >= 0 ? 1 : -1;
+          const aheadX = dir > 0 ? enemy.x + enemy.width + 4 : enemy.x - 4;
+          const footY = enemy.y + enemy.height + 6;
+          const hasGround = blocksRef.current.some(
+            b =>
+              !b.isDestroyed &&
+              b.type !== 'lava' &&
+              aheadX >= b.x &&
+              aheadX <= b.x + b.width &&
+              footY >= b.y &&
+              footY <= b.y + b.height + 14
+          );
+          if (!hasGround) {
+            enemy.vx = -(enemy.vx || dir);
+            enemy.facing = enemy.vx > 0 ? 'right' : 'left';
+          }
+        }
+        // Fell in lava/pit: dead for good — NO respawn, ever
+        if (enemy.y > levelDef.height + 60) {
+          enemy.isAlive = false;
+        }
       }
 
       // Player collides with enemy (Stomp or Hurt)
@@ -3043,6 +3239,15 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         p.y < enemy.y + enemy.height &&
         p.y + p.height > enemy.y
       ) {
+        // LIVING WALL: a blocking fighter is never walked through by Mario beasts —
+        // zero chip, zero pass-through (fighters/bosses still chip through the guard below)
+        if (p.isBlocking && p.isGrounded && (enemy.type === 'goomba' || enemy.type === 'koopa' || enemy.type === 'hammerbro' || enemy.type === 'spiny')) {
+          const dir = p.x + p.width / 2 < enemy.x + enemy.width / 2 ? 1 : -1;
+          enemy.x = dir > 0 ? p.x + p.width + 1 : p.x - enemy.width - 1;
+          enemy.vx = dir * Math.max(1.4, Math.abs(enemy.vx || 1.4));
+          enemy.facing = dir > 0 ? 'right' : 'left';
+          return;
+        }
         // KOOPA SHELL contact rules — shells are toys, not threats!
         if (enemy.type === 'koopa' && enemy.inShell) {
           if (enemy.shellVx) {
@@ -3114,8 +3319,14 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             soundManager.playPunch();
           }
         } else {
-          // Player hurt
+          // Player hurt — and shove the walker off so it can't grind inside you
           handlePlayerHurt();
+          if (enemy.isAlive && (enemy.type === 'goomba' || enemy.type === 'koopa' || enemy.type === 'hammerbro' || enemy.type === 'spiny')) {
+            const dir = p.x + p.width / 2 < enemy.x + enemy.width / 2 ? 1 : -1;
+            enemy.x += dir * 18;
+            enemy.vx = dir * Math.max(1.2, Math.abs(enemy.vx || 1.2));
+            enemy.facing = dir > 0 ? 'right' : 'left';
+          }
         }
       }
     });
@@ -3768,6 +3979,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         bossEnemy={bossEnemyState}
         onOpenGuide={onOpenGuide}
         onOpenSelectFighter={onOpenSelectFighter}
+        onOpenStages={onOpenStages}
         onToggleSound={toggleSound}
         isMuted={isMuted}
         onTogglePause={togglePause}
@@ -3817,6 +4029,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               <p className="text-white font-black text-base mt-1">
                 {unlockedNow.map(id => `${FIGHTERS[id].avatar} ${FIGHTERS[id].nameAr}`).join(' • ')}
               </p>
+              <p className="text-emerald-300 font-black text-xs mt-1">🎮 رح تلعب فوراً بـ {FIGHTERS[unlockedNow[0]].nameAr} بالمرحلة الجاية!</p>
             </div>
           )}
           <p className="text-xs text-neutral-500 mt-1 font-mono">اضغط Enter ⏎ للانتقال للعالم التالي</p>

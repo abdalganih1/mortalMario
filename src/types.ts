@@ -53,6 +53,8 @@ export interface Player {
   special2Cooldown: number;
   isInvincible: boolean;
   invincibleTimer: number;
+  comboStep?: number; // punch combo position: 0 none, 1 jab, 2 cross, 3 finisher (slow heavy!)
+  comboTimer?: number; // window to chain the next punch
   powerUp: 'none' | 'mushroom' | 'flower';
   powerUpTimer: number;
   animationFrame: number;

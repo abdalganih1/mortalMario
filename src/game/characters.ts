@@ -162,8 +162,8 @@ export const FIGHTERS: Record<FighterId, FighterConfig> = {
     avatar: '🕶️',
     special1Name: 'الكرة الخضراء (Forceball Bolt)',
     special1Desc: 'يطلق كرة طاقة خضراء متفجرة من قبضته تصعق الأعداء عن بعد!',
-    special2Name: 'لكمة الظل (Shadow Uppercut)',
-    special2Desc: 'الضربة الأشهر! لكمة صاعدة خاطفة ترفع كل الأعداء القريبين عالياً مع صرخة النصر!',
+    special2Name: 'ركلة الظل الطائرة (Shadow Kick)',
+    special2Desc: 'الضربة الأشهر بتاريخ المورتال! يطير برجله ممدودة كالسهم ويدهس كل من بطريقه مع وميض أخضر هوليوودي!',
     quote: "Here's Johnny!",
   },
   jax: {
@@ -439,36 +439,80 @@ export const FIGHTERS: Record<FighterId, FighterConfig> = {
 };
 
 // --- PROGRESSION: fighters unlock by clearing stages (stage index required) ---
+// ORDER = the fighter list order in this file (card 1, 2, 3...). Keep in sync!
 export const FIGHTER_UNLOCK: Record<FighterId, number> = {
   subzero: 0,
   scorpion: 0,
   noob: 1,
   raiden: 2,
   reptile: 3,
-  kunglao: 4,
-  kano: 5,
-  baraka: 6,
-  jade: 7,
-  liukang: 8,
-  mileena: 9,
-  kitana: 10,
-  ermac: 11,
-  smoke: 13,
-  johnnycage: 14,
-  rain: 15,
-  sindel: 17,
-  sonya: 18,
+  baraka: 4,
+  liukang: 5,
+  kitana: 6,
+  shangtsung: 7,
+  kunglao: 8,
+  johnnycage: 9,
+  jax: 10,
+  sonya: 11,
+  kano: 12,
+  jade: 13,
+  mileena: 14,
+  ermac: 15,
+  smoke: 16,
+  rain: 17,
+  sindel: 18,
   nightwolf: 19,
-  kabal: 21,
-  sheeva: 23,
-  jax: 24,
-  quanchi: 26,
-  fujin: 28,
-  striker: 30,
-  shangtsung: 32,
-  goro: 34,
-  kintaro: 38,
-  shaokahn: 45,
+  kabal: 20,
+  sheeva: 21,
+  quanchi: 22,
+  fujin: 23,
+  striker: 24,
+  goro: 25,
+  kintaro: 26,
+  shaokahn: 27,
+};
+
+// --- FIGHTER TRAITS: what makes each fighter play differently ---
+// melee = punch damage multiplier, ranged = projectile damage, speed = run multiplier
+// combo = signature 3rd-hit finisher name, perk = passive special trick
+export interface FighterTrait {
+  melee: number;
+  ranged: number;
+  speed: number;
+  combo: string;
+  perk: string;
+}
+
+export const FIGHTER_TRAITS: Record<FighterId, FighterTrait> = {
+  subzero: { melee: 1.0, ranged: 1.2, speed: 1.0, combo: 'تجميد ساحق ❄️', perk: 'الضربة 3 تجمّد العدو بدل قتله — كسّره بلكمة!' },
+  scorpion: { melee: 1.2, ranged: 1.0, speed: 1.0, combo: 'سحب الجحيم 🔥', perk: 'الضربة 3 تسحب العدو البعيد لعندك مثل الرمح!' },
+  noob: { melee: 1.0, ranged: 1.1, speed: 1.05, combo: 'ظل مزدوج 👤', perk: 'الضربة 3 تستدعي ظلاً يضرب معك ضربة إضافية!' },
+  raiden: { melee: 1.0, ranged: 1.3, speed: 1.0, combo: 'عاصفة رعدية ⚡', perk: 'الضربة 3 تكهرب كل الأعداء القريبين!' },
+  reptile: { melee: 1.1, ranged: 1.1, speed: 1.05, combo: 'سمّ مميت 🦎', perk: 'الضربة 3 تسمم العدو — دم مستمر 3 ثوان!' },
+  baraka: { melee: 1.5, ranged: 0.9, speed: 0.95, combo: 'تمزيق وحشي 🔪', perk: 'شفرات حادة: كل اللكمات +50% ضرر دائم!' },
+  liukang: { melee: 1.3, ranged: 1.0, speed: 1.1, combo: 'غضب التنين 🐉', perk: 'الأسرع: ركض أسرع وكومبو أسرع من الكل!' },
+  kitana: { melee: 1.0, ranged: 1.2, speed: 1.05, combo: 'رقصة المراوح 🪭', perk: 'الضربة 3 ترد قذائف الأعداء عليهم!' },
+  shangtsung: { melee: 0.9, ranged: 1.4, speed: 0.95, combo: 'سرقة الروح 💀', perk: 'الضربة 3 تسرق دم العدو وتشفيك!' },
+  kunglao: { melee: 1.2, ranged: 1.1, speed: 1.05, combo: 'إعصار القبعة 🎩', perk: 'القبعة تدور حولك 3 ثوان بعد الكومبو — درع دوّار!' },
+  johnnycage: { melee: 1.3, ranged: 1.0, speed: 1.05, combo: 'ضربة هوليوود 🕶️', perk: 'ركلة الظل تطير أبعد وأسرع — وتصيب كل الطريق!' },
+  jax: { melee: 1.6, ranged: 0.9, speed: 0.9, combo: 'سحق غوتشا 🦾', perk: 'أثقل لكمات باللعبة +60% — بس أبطأ حركة!' },
+  sonya: { melee: 1.1, ranged: 1.1, speed: 1.15, combo: 'قبلة الموت 💖', perk: 'أسرع مقاتلة: الكومبو كامل بنص الوقت!' },
+  kano: { melee: 1.2, ranged: 1.0, speed: 1.0, combo: 'عين الليزر 👁️', perk: 'الضربة 3 تطلق ليزر فوري يخترق كل الصف!' },
+  jade: { melee: 1.0, ranged: 1.2, speed: 1.1, combo: 'رقصة الظل 🪃', perk: 'بعد الكومبو تختفي ثانيتين — الأعداء ما يشوفوك!' },
+  mileena: { melee: 1.4, ranged: 1.0, speed: 1.05, combo: 'وليمة الأنياب 👄', perk: 'الضربة 3 تعض وتشفيك من دم العدو!' },
+  ermac: { melee: 1.0, ranged: 1.3, speed: 0.95, combo: 'سحق ذهني 🔴', perk: 'الضربة 3 ترفع كل الأعداء بالهواء معاً!' },
+  smoke: { melee: 1.1, ranged: 1.0, speed: 1.1, combo: 'خنق الدخان 💨', perk: 'الكومبو يخليك دخان — تمر من خلال الأعداء بلا ضرر!' },
+  rain: { melee: 1.0, ranged: 1.3, speed: 1.0, combo: 'طوفان إيدينيا 🌧️', perk: 'الضربة 3 مطر يشفيك + يبطّئ الأعداء!' },
+  sindel: { melee: 0.9, ranged: 1.4, speed: 1.0, combo: 'صرخة الملكة 📢', perk: 'الصرخة تدوّخ الزعماء مرتين أطول!' },
+  nightwolf: { melee: 1.2, ranged: 1.1, speed: 1.0, combo: 'غضب الذئب 🐺', perk: 'الضربة 3 تستدعي سهم روح إضافي تلقائياً!' },
+  kabal: { melee: 1.2, ranged: 1.0, speed: 1.25, combo: 'نوماد داش ⚡', perk: 'أسرع ركض باللعبة — الداش أطول 50%!' },
+  sheeva: { melee: 1.5, ranged: 0.9, speed: 0.9, combo: 'زلزال شيفا 👊', perk: '4 أذرع: الضربة 3 تهز الشاشة وتسقط كل القريبين!' },
+  quanchi: { melee: 0.9, ranged: 1.3, speed: 0.95, combo: 'لعنة النذر 🔮', perk: 'الضربة 3 تلعن العدو — ياخد ضعف الضرر 5 ثوان!' },
+  fujin: { melee: 1.1, ranged: 1.2, speed: 1.1, combo: 'إعصار السماء 🌪️', perk: 'الكومبو يرفعك بالهواء — كومبو جوي إضافي!' },
+  striker: { melee: 1.1, ranged: 1.2, speed: 1.0, combo: 'مداهمة SWAT 🚔', perk: 'الضربة 3 قنبلة صوتية تدوّخ كل الشاشة!' },
+  goro: { melee: 1.7, ranged: 1.0, speed: 0.85, combo: 'سحق الأمير 👹', perk: 'ملك الوحوش: +70% لكمات — 4 أذرع تدمر كلشي!' },
+  kintaro: { melee: 1.6, ranged: 1.0, speed: 0.9, combo: 'غضب النمر 🐯', perk: 'نار النمر تحرق: اللكمات تشعل الأعداء!' },
+  shaokahn: { melee: 1.8, ranged: 1.3, speed: 0.9, combo: 'غضب الإمبراطور 🔨', perk: 'إمبراطور العالم السفلي: أقوى مقاتل بكل المقاييس!' },
 };
 
 // --- SHARED ART DIRECTION: one palette per fighter, used by player + enemy painters ---
@@ -493,7 +537,7 @@ export const FIGHTER_ART: Record<FighterId, FighterArt> = {
   kitana: { skin: '#f0c8a8', cowl: '#0a1030', armor: '#60a5fa', armorDark: '#1e3a8a', pants: '#0a1030', eyes: '#dbeafe', aura: 'rgba(96, 165, 250, 0.45)' },
   shangtsung: { skin: '#d9b896', cowl: '#12081f', armor: '#a855f7', armorDark: '#3b0764', pants: '#12081f', eyes: '#4ade80', aura: 'rgba(168, 85, 247, 0.5)' },
   kunglao: { skin: '#e8b88a', cowl: '#1a1408', armor: '#eab308', armorDark: '#713f12', pants: '#1a1408', eyes: '#ffffff', aura: 'rgba(234, 179, 8, 0.45)' },
-  johnnycage: { skin: '#f0c8a8', cowl: '#0b1410', armor: '#4ade80', armorDark: '#14532d', pants: '#0b1410', eyes: '#bbf7d0', aura: 'rgba(74, 222, 128, 0.45)' },
+  johnnycage: { skin: '#f0c8a8', cowl: '#3b2a1a', armor: '#e8b88a', armorDark: '#c98d5e', pants: '#dc2626', eyes: '#0a0a0a', aura: 'rgba(74, 222, 128, 0.45)' },
   jax: { skin: '#c98d5e', cowl: '#10151f', armor: '#94a3b8', armorDark: '#334155', pants: '#10151f', eyes: '#f8fafc', aura: 'rgba(148, 163, 184, 0.45)' },
   sonya: { skin: '#f2cfae', cowl: '#160a12', armor: '#f472b6', armorDark: '#831843', pants: '#160a12', eyes: '#fce7f3', aura: 'rgba(244, 114, 182, 0.45)' },
   kano: { skin: '#d9a06b', cowl: '#101010', armor: '#ef4444', armorDark: '#7f1d1d', pants: '#101010', eyes: '#fca5a5', aura: 'rgba(239, 68, 68, 0.45)' },
@@ -561,4 +605,24 @@ export function isFighterUnlocked(id: FighterId): boolean {
 
 export function isMoveUnlocked(move: keyof typeof MOVE_UNLOCK, stageIdx: number): boolean {
   return stageIdx >= MOVE_UNLOCK[move];
+}
+
+const FIGHTER_KEY = 'mmk_fighter';
+
+export function getSavedFighter(): FighterId | null {
+  try {
+    const v = localStorage.getItem(FIGHTER_KEY);
+    if (v && v in FIGHTER_UNLOCK) return v as FighterId;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+export function saveFighter(id: FighterId): void {
+  try {
+    localStorage.setItem(FIGHTER_KEY, id);
+  } catch {
+    /* ignore */
+  }
 }
